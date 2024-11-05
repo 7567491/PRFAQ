@@ -2,7 +2,7 @@ import json
 import requests
 from typing import Dict, Any, Generator
 import streamlit as st
-from .utils import add_letters_record, save_history
+from .utils import add_letters_record, save_history, add_log
 from flask import Blueprint, jsonify, request
 from datetime import datetime
 
@@ -35,12 +35,14 @@ def get_external_faq(question_id):
 class APIClient:
     def __init__(self, config: Dict[str, Any]):
         """初始化API客户端"""
-        self.config = config
+        self.config = config  # 使用传入的配置
         self.full_content = ""  # 初始化为实例变量
+        add_log("info", "APIClient initialized")
         
     def generate_content_stream(self, prompt: str, api_name: str = "claude") -> Generator[str, None, None]:
         """生成内容的流式接口"""
         try:
+            add_log("info", f"Generating content stream for API: {api_name}")
             # 每次生成前清空内容
             self.full_content = ""
             input_letters = len(prompt)
@@ -82,6 +84,7 @@ class APIClient:
             )
             
             if response.status_code == 200:
+                add_log("info", f"API request successful for {api_name}")
                 chunk_count = 0
                 
                 for line in response.iter_lines():
@@ -135,14 +138,16 @@ class APIClient:
                         
                         # 在内容末尾添加字符统计
                         yield f"\n\n生成内容总字符数: {len(self.full_content)}"
+                        add_log("info", f"Content generation completed for {api_name}")
                         
                     except Exception as e:
-                        pass
+                        add_log("error", f"Error during content generation: {str(e)}")
                         
             else:
                 raise Exception(f"API请求失败 (状态码: {response.status_code})")
                 
         except Exception as e:
+            add_log("error", f"API request error: {str(e)}")
             # API切换逻辑
             next_api = None
             if api_name == "claude":
@@ -151,6 +156,7 @@ class APIClient:
                 next_api = "zhipu"
                 
             if next_api:
+                add_log("info", f"Switching to next API: {next_api}")
                 # 不清空 self.full_content，继续累积内容
                 yield from self.generate_content_stream(prompt, next_api)
             else:
@@ -166,5 +172,5 @@ class APIClient:
                         # 在内容末尾添加字符统计
                         yield f"\n\n生成内容总字符数: {len(self.full_content)}"
                     except Exception as e:
-                        pass
+                        add_log("error", f"Error during partial content generation: {str(e)}")
                 yield ""
