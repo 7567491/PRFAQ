@@ -1,0 +1,37 @@
+{
+  "page_title": "PRFAQ Pro 生成器",
+  "sections": {
+    "pr": {
+      "title": "PR 生成",
+      "description": "生成产品虚拟新闻稿"
+    },
+    "faq": {
+      "title": "客户 FAQ",
+      "description": "生成客户常见问题解答"
+    },
+    "internal_faq": {
+      "title": "内部 FAQ", 
+      "description": "生成内部常见问题解答"
+    },
+    "mlp": {
+      "title": "最小可爱原型开发",
+      "description": "生成MLP开发计划"
+    },
+    "operation_review": {
+      "title": "运营复盘",
+      "description": "生成运营复盘报告"
+    }
+  },
+  "form_fields": {
+    "customer": {
+      "label": "客户",
+      "placeholder": "XX客户",
+      "default": "产品经理"
+    },
+    "scenario": {
+      "label": "场景",
+      "placeholder": "XX场景",
+      "default": "开发新产品的场景"
+    }
+  }
+} 
