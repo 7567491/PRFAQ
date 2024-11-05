@@ -141,10 +141,10 @@ def main():
             st.header("主要功能")
             
             # 主要功能按钮
-            if st.button("✨ PRFAQ一键生成", use_container_width=True):
+            if st.button("📰 虚拟新闻稿", use_container_width=True):
                 clear_main_content()
-                st.session_state.current_section = 'all_in_one'
-                add_log("info", "切换到PRFAQ一键生成模式")
+                st.session_state.current_section = 'pr'
+                add_log("info", "切换到虚拟新闻稿模式")
             
             if st.button("📊 复盘六步法", use_container_width=True):
                 clear_main_content()
@@ -153,11 +153,6 @@ def main():
             
             # 功能模块按钮
             st.header("功能模块")
-            
-            if st.button("📰 虚拟新闻稿", use_container_width=True):
-                clear_main_content()
-                st.session_state.current_section = 'pr'
-                add_log("info", "切换到虚拟新闻稿模式")
             
             if st.button("❓ 客户 FAQ", use_container_width=True):
                 clear_main_content()
@@ -173,6 +168,11 @@ def main():
                 clear_main_content()
                 st.session_state.current_section = 'mlp'
                 add_log("info", "切换到MLP开发模式")
+            
+            if st.button("✨ PRFAQ一键生成", use_container_width=True):
+                clear_main_content()
+                st.session_state.current_section = 'all_in_one'
+                add_log("info", "切换到PRFAQ一键生成模式")
             
             # 系统功能按钮
             st.header("系统功能")
@@ -329,7 +329,7 @@ def main():
                 mlp_generator = MLPGenerator(api_client)
                 mlp_generator.generate_mlp()
             elif st.session_state.current_section == 'aar':
-                # 创建API���户端实例
+                # 创建API客户端实例
                 api_client = APIClient(config)
                 aar_generator = AARGenerator(api_client)
                 aar_generator.render()
