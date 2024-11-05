@@ -1,0 +1,44 @@
+# Package Management
+pip==24.0
+setuptools==69.1.1
+wheel==0.42.0
+
+# Web Frameworks
+streamlit==1.32.0
+Flask==3.0.2
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+Werkzeug==3.0.1
+
+# Data Processing
+pandas==2.2.1
+numpy==1.26.4
+
+# HTTP Requests
+requests==2.31.0
+
+# Development Tools
+black==24.2.0
+flake8==7.0.0
+
+# Path handling
+pathlib==1.0.1
+
+# Environment Variables
+python-dotenv==1.0.1
+
+# Testing
+pytest==8.1.1
+pytest-cov==4.1.0
+
+# Development Tools
+mypy==1.8.0
+isort==5.13.2
+
+# Documentation
+Sphinx==7.2.6
+sphinx-rtd-theme==2.0.0
+
+# Build and Distribution
+build==1.0.3
+twine==5.0.0
