@@ -69,7 +69,7 @@ def show_login_page():
         submitted = st.form_submit_button("登录")
         
         if submitted:
-            if username and password:  # 简单的非空验证
+            if username and password:  # 简单的非空证
                 st.session_state.user = username
                 st.session_state.authenticated = True
                 
@@ -103,9 +103,9 @@ def main():
                 color: #FFFFFF; /* 白色文字 */
             }
             /* 侧边栏样式 */
-            .css-1d391kg {
-                background-color: #1E1E1E; /* 侧边栏背景 */
-                color: #FFFFFF; /* 侧边栏文字 */
+            .css-1d391kg, .css-1d391kg > div {
+                background-color: #1E1E1E !important; /* 侧边栏背景 */
+                color: #FFFFFF !important; /* 侧边栏文字 */
             }
             /* 自定义按钮样式 */
             .stButton > button {
@@ -124,6 +124,7 @@ def main():
             .stTextInput > div > input {
                 background-color: #333333; /* 深色输入框背景 */
                 color: #FFFFFF; /* 输入框文字颜色 */
+                border: 1px solid #555555; /* 输入框边框颜色 */
             }
             /* 自定义表单样式 */
             .stForm {
@@ -134,6 +135,17 @@ def main():
             .stDataFrame {
                 background-color: #2E2E2E; /* 深色表格背景 */
                 color: #FFFFFF; /* 表格文字颜色 */
+            }
+            /* 自定义选择框样式 */
+            .stSelectbox > div > div {
+                background-color: #333333; /* 深色选择框背景 */
+                color: #FFFFFF; /* 选择框文字颜色 */
+            }
+            /* 自定义文本区域样式 */
+            .stTextArea > div > textarea {
+                background-color: #333333; /* 深色文本区域背景 */
+                color: #FFFFFF; /* 文本区域文字颜色 */
+                border: 1px solid #555555; /* 文本区域边框颜色 */
             }
             </style>
         """, unsafe_allow_html=True)
@@ -369,7 +381,7 @@ def main():
                 for log in st.session_state.logs:
                     # 根据日志类型选择不同的CSS类
                     if log['level'] == 'error':
-                        color = "#FF0000"  # 错误信息用红色
+                        color = "#FF0000"  # 错信息用红色
                     elif log['level'] == 'user':
                         color = "#FFB700"  # 用户操作用黄色
                     elif log['level'] == 'warning':
