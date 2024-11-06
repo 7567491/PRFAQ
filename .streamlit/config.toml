@@ -1,0 +1,24 @@
+[theme]
+# 主要颜色
+primaryColor = "#FFB700"  # 黄色主题色
+
+# 背景颜色
+backgroundColor = "#1E1E1E"  # 深色背景
+secondaryBackgroundColor = "#2E2E2E"  # 次要背景色
+
+# 文字颜色
+textColor = "#FFFFFF"  # 白色文字
+
+# 按钮颜色
+base = "dark"  # 使用深色主题
+buttonTextColor = "#FFFFFF"  # 按钮文字颜色设为白色
+
+# 字体
+font = "sans serif"
+
+[server]
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+gatherUsageStats = false

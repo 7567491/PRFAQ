@@ -1,9 +1,9 @@
 {
   "total": {
-    "input_letters": 496898,
-    "output_letters": 257778,
-    "cost_usd": 1.0124540000000006,
-    "cost_rmb": 7.289668799999998
+    "input_letters": 497165,
+    "output_letters": 258756,
+    "cost_usd": 1.0146770000000007,
+    "cost_rmb": 7.305674399999997
   },
   "records": [
     {
@@ -5127,6 +5127,19 @@
       "input_cost_rmb": 0.0165528,
       "output_cost_rmb": 0.0056592000000000005,
       "total_cost_rmb": 0.022212000000000003
+    },
+    {
+      "timestamp": "2024-11-06 23:16:22",
+      "api_name": "moonshot",
+      "operation": "生成pr内容",
+      "input_letters": 267,
+      "output_letters": 978,
+      "input_cost_usd": 0.00026700000000000004,
+      "output_cost_usd": 0.001956,
+      "total_cost_usd": 0.0022229999999999997,
+      "input_cost_rmb": 0.0019224000000000003,
+      "output_cost_rmb": 0.014083199999999999,
+      "total_cost_rmb": 0.0160056
     }
   ]
 }

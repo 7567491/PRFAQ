@@ -62,14 +62,24 @@ def show_login_page():
         st.rerun()
         return
     
-    with st.form("login_form"):
-        username = st.text_input("用户名")
-        password = st.text_input("密码", type="password")
+    with st.form("login_form", clear_on_submit=False):  # 设置clear_on_submit=False
+        # 使用markdown来创建带autocomplete的input
+        st.markdown("""
+            <input type="text" name="username" placeholder="用户名" 
+                   autocomplete="username" style="display:none">
+            <input type="password" name="password" placeholder="密码" 
+                   autocomplete="current-password" style="display:none">
+        """, unsafe_allow_html=True)
+        
+        username = st.text_input("用户名", key="username_input", 
+                               autocomplete="username")
+        password = st.text_input("密码", type="password", key="password_input", 
+                               autocomplete="current-password")
         remember = st.checkbox("记住登录状态", value=True)
         submitted = st.form_submit_button("登录")
         
         if submitted:
-            if username and password:  # 简单的非空证
+            if username and password:  # 简单的非空验证
                 st.session_state.user = username
                 st.session_state.authenticated = True
                 
@@ -93,62 +103,6 @@ def main():
             page_title=templates["page_title"],
             layout="wide"
         )
-        
-        # 添加自定义CSS
-        st.markdown("""
-            <style>
-            /* 全局背景和文字颜色 */
-            body, .stApp {
-                background-color: #1E1E1E; /* 深色背景 */
-                color: #FFFFFF; /* 白色文字 */
-            }
-            /* 侧边栏样式 */
-            .css-1d391kg, .css-1d391kg > div {
-                background-color: #1E1E1E !important; /* 侧边栏背景 */
-                color: #FFFFFF !important; /* 侧边栏文字 */
-            }
-            /* 自定义按钮样式 */
-            .stButton > button {
-                border: 2px solid #FFB700; /* 黄色边框 */
-                background-color: transparent; /* 无填充 */
-                color: white; /* 文字颜色保持白色 */
-                padding: 0.5rem 1rem; /* 按钮内边距 */
-                font-weight: bold; /* 加粗文字 */
-                transition: background-color 0.3s ease; /* 背景色过渡 */
-            }
-            .stButton > button:hover {
-                background-color: #FFF5CC; /* 悬停时的背景色 */
-                color: black; /* 悬停时文字颜色变为黑色 */
-            }
-            /* 自定义输入框样式 */
-            .stTextInput > div > input {
-                background-color: #333333; /* 深色输入框背景 */
-                color: #FFFFFF; /* 输入框文字颜色 */
-                border: 1px solid #555555; /* 输入框边框颜色 */
-            }
-            /* 自定义表单样式 */
-            .stForm {
-                background-color: #2E2E2E; /* 深色表单背景 */
-                color: #FFFFFF; /* 表单文字颜色 */
-            }
-            /* 自定义表格样式 */
-            .stDataFrame {
-                background-color: #2E2E2E; /* 深色表格背景 */
-                color: #FFFFFF; /* 表格文字颜色 */
-            }
-            /* 自定义选择框样式 */
-            .stSelectbox > div > div {
-                background-color: #333333; /* 深色选择框背景 */
-                color: #FFFFFF; /* 选择框文字颜色 */
-            }
-            /* 自定义文本区域样式 */
-            .stTextArea > div > textarea {
-                background-color: #333333; /* 深色文本区域背景 */
-                color: #FFFFFF; /* 文本区域文字颜色 */
-                border: 1px solid #555555; /* 文本区域边框颜色 */
-            }
-            </style>
-        """, unsafe_allow_html=True)
         
         # 检查是否已登录
         if 'authenticated' not in st.session_state or not st.session_state.authenticated:
@@ -188,7 +142,7 @@ def main():
                 st.session_state.current_section = 'aar'
                 add_log("info", "切换到复盘六步法模式")
             
-            # 功能模块按钮
+            # 功能块按钮
             st.header("功能模块")
             
             if st.button("❓ 客户 FAQ", use_container_width=True):
@@ -303,7 +257,7 @@ def main():
                 all_in_one_generator = AllInOneGenerator(api_client)
                 all_in_one_generator.render()
             elif st.session_state.current_section == 'pr':
-                # 创API客户端实例
+                # 创API客户端���例
                 api_client = APIClient(config)
                 pr_generator = PRGenerator(api_client)
                 pr_generator.render()
