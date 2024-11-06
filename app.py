@@ -97,6 +97,11 @@ def main():
         # 添加自定义CSS
         st.markdown("""
             <style>
+            /* 强制设置背景颜色和文本颜色 */
+            body {
+                background-color: #1E1E1E; /* 深色背景 */
+                color: #FFFFFF; /* 白色文本 */
+            }
             /* 自定义按钮样式 */
             .stButton > button {
                 border: 2px solid #FFB700; /* 黄色边框 */
@@ -109,6 +114,16 @@ def main():
             .stButton > button:hover {
                 background-color: #FFF5CC; /* 悬停时的背景色 */
                 color: black; /* 悬停时文字颜色变为黑色 */
+            }
+            /* 自定义输入框样式 */
+            .stTextInput > div > input {
+                background-color: #333333; /* 深色输入框背景 */
+                color: #FFFFFF; /* 输入框文字颜色 */
+            }
+            /* 自定义表单样式 */
+            .stForm {
+                background-color: #2E2E2E; /* 深色表单背景 */
+                color: #FFFFFF; /* 表单文字颜色 */
             }
             </style>
         """, unsafe_allow_html=True)
@@ -130,10 +145,10 @@ def main():
         with st.sidebar:
             # 添加logo（带错误处理）
             try:
-                st.image("assets/logo.jpg")
+                st.image("assets/logo.png")
             except Exception as e:
                 st.warning("Logo图片未找到")
-                add_log("warning", "Logo图片未找到，请确保assets/logo.jpg存在")
+                add_log("warning", "Logo图片未找到，请确保assets/logo.png存在")
             
             st.title(f"PRFAQ Pro - {st.session_state.user}")  # 显示当前用户
             
