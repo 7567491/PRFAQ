@@ -97,10 +97,15 @@ def main():
         # 添加自定义CSS
         st.markdown("""
             <style>
-            /* 强制设置背景颜色和文本颜色 */
-            body {
+            /* 全局背景和文字颜色 */
+            body, .stApp {
                 background-color: #1E1E1E; /* 深色背景 */
-                color: #FFFFFF; /* 白色文本 */
+                color: #FFFFFF; /* 白色文字 */
+            }
+            /* 侧边栏样式 */
+            .css-1d391kg {
+                background-color: #1E1E1E; /* 侧边栏背景 */
+                color: #FFFFFF; /* 侧边栏文字 */
             }
             /* 自定义按钮样式 */
             .stButton > button {
@@ -124,6 +129,11 @@ def main():
             .stForm {
                 background-color: #2E2E2E; /* 深色表单背景 */
                 color: #FFFFFF; /* 表单文字颜色 */
+            }
+            /* 自定义表格样式 */
+            .stDataFrame {
+                background-color: #2E2E2E; /* 深色表格背景 */
+                color: #FFFFFF; /* 表格文字颜色 */
             }
             </style>
         """, unsafe_allow_html=True)
