@@ -2,7 +2,8 @@ import json
 import requests
 from typing import Dict, Any, Generator
 import streamlit as st
-from .utils import add_letters_record, save_history, add_log
+from .utils import add_letters_record, save_history
+from user.logger import add_log
 from flask import Blueprint, jsonify, request
 from datetime import datetime
 
@@ -130,11 +131,11 @@ class APIClient:
                         )
                         
                         # 保存到历史记录
-                        save_history({
-                            'content': self.full_content,
-                            'type': st.session_state.current_section,
-                            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        })
+                        if success:  # 只有在成功记录账单后才保存历史记录
+                            save_history(
+                                content=self.full_content,
+                                history_type=st.session_state.current_section
+                            )
                         
                         # 在内容末尾添加字符统计
                         yield f"\n\n生成内容总字符数: {len(self.full_content)}"
