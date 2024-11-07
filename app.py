@@ -21,7 +21,7 @@ from modules.aar_generator import AARGenerator
 from user.admin import show_admin_panel
 from user.user_process import check_auth, handle_logout, UserManager
 from user.chat import show_chat_interface
-from user.bill import show_bill_detail
+from bill.bill import show_bill_detail
 from user.logger import display_logs
 from db.db_admin import show_db_admin
 from user.user_history import show_user_history

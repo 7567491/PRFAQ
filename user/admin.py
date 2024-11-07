@@ -3,6 +3,7 @@ import sqlite3
 from datetime import datetime
 from user.user_process import UserManager
 from user.logger import add_log
+from bill.bill import BillManager
 
 def show_admin_panel():
     """显示管理员面板"""
@@ -45,7 +46,7 @@ def show_admin_panel():
                 st.write("使用统计:")
                 st.write(f"- 创建时间: {user[7]}")
                 st.write(f"- 最后登录: {user[8] or '从未登录'}")
-                st.write(f"- 总字符数: {user[9]:,}")
+                st.write(f"- ���字符数: {user[9]:,}")
                 st.write(f"- 总消费: ¥{user[10]:.4f}")
                 st.write(f"- 每日字符限制: {user[11]:,}")
                 st.write(f"- 今日已用字符: {user[12]:,}")

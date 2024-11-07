@@ -122,7 +122,7 @@ def show_db_admin():
                     
                     add_log("info", "查看数据库信息")
                 else:
-                    st.error("数据���文件不存在")
+                    st.error("数据文件不存在")
                     add_log("error", "尝试查看时发现数据库文件不存在")
             except Exception as e:
                 error_msg = f"查看数据库失败: {str(e)}"

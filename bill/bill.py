@@ -123,6 +123,7 @@ class BillManager:
         finally:
             conn.close()
 
+
 def show_bill_detail():
     """显示账单明细页面"""
     st.markdown("### 账单明细")

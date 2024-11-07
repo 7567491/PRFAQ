@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 import streamlit as st
 import sqlite3
-from user.bill import BillManager
+from bill.bill import BillManager
 from user.user_process import UserManager
 from user.logger import add_log, display_logs
 
