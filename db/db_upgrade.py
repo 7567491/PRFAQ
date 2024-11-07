@@ -88,46 +88,32 @@ def check_upgrade_needed(conn: sqlite3.Connection) -> bool:
     needs_upgrade = False
     
     try:
-        # 检查用户表结构
+        # 检查用户表是否有积分字段
         c.execute("PRAGMA table_info(users)")
         user_columns = {row[1] for row in c.fetchall()}
+        if 'points' not in user_columns:
+            needs_upgrade = True
         
-        # 检查账单表结构
+        # 检查是否存在积分交易记录表
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='point_transactions'")
+        if not c.fetchone():
+            needs_upgrade = True
+        
+        # 检查是否存在充值记录表
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='recharge_records'")
+        if not c.fetchone():
+            needs_upgrade = True
+        
+        # 检查账单表是否有积分消费字段
         c.execute("PRAGMA table_info(bills)")
         bill_columns = {row[1] for row in c.fetchall()}
-        
-        # 需要的列
-        required_user_columns = {
-            'daily_chars_limit',
-            'used_chars_today',
-            'total_chars',
-            'total_cost'
-        }
-        
-        required_bill_columns = {
-            'total_cost',
-            'input_letters',
-            'output_letters'
-        }
-        
-        # 检查是否需要升级用户表
-        if not required_user_columns.issubset(user_columns):
-            needs_upgrade = True
-        
-        # 检查是否需要升级账单表
-        if not required_bill_columns.issubset(bill_columns):
-            needs_upgrade = True
-        
-        # 检查是否存在旧列名
-        old_columns = {'daily_limit', 'used_today', 'api_calls', 'total_cost_rmb', 'total_cost_usd'}
-        if any(col in user_columns for col in old_columns) or any(col in bill_columns for col in old_columns):
+        if 'points_cost' not in bill_columns:
             needs_upgrade = True
         
         return needs_upgrade
         
     except sqlite3.Error as e:
         print(f"检查数据库结构时出错: {str(e)}")
-        # 如果出错（比如表不存在），也认为需要升级
         return True
 
 def upgrade_bills_table(conn: sqlite3.Connection) -> dict:
@@ -247,54 +233,68 @@ def upgrade_database() -> dict:
             results['details'].append("检测到当前数据库结构已经是最新的")
             return results
         
-        # 1. 清理可能存在的临时表
-        cleanup_temp_tables(conn)
-        results['details'].append("清理临时表成功")
-        
-        # 2. 检查当前表结构
-        column_mappings = check_column_mapping(conn)
-        current_columns = get_current_columns(conn)
-        results['details'].append(f"当前表列: {current_columns}")
-        results['details'].append(f"需要迁移的列: {column_mappings}")
-        
-        # 3. 升级用户表
         c = conn.cursor()
+        
+        # 1. 在用户表中添加积分字段
         c.execute('''
-        CREATE TABLE users_new (
-            user_id TEXT PRIMARY KEY,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            email TEXT,
-            phone TEXT,
-            org_name TEXT,
-            role TEXT NOT NULL,
-            is_active INTEGER NOT NULL,
-            created_at TEXT NOT NULL,
-            last_login TEXT,
-            total_chars INTEGER DEFAULT 0,
-            total_cost REAL DEFAULT 0.0,
-            daily_chars_limit INTEGER DEFAULT 100000,
-            used_chars_today INTEGER DEFAULT 0
+        ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 1000;
+        ''')
+        results['details'].append("用户表添加积分字段成功")
+        
+        # 2. 创建积分交易记录表
+        c.execute('''
+        CREATE TABLE IF NOT EXISTS point_transactions (
+            transaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            type TEXT NOT NULL,  -- 'reward'(奖励), 'consume'(消费), 'recharge'(充值), 'admin'(管理员调整)
+            amount INTEGER NOT NULL,  -- 正数表示增加，负数表示减少
+            balance INTEGER NOT NULL, -- 交易后的余额
+            description TEXT NOT NULL,
+            operation_id TEXT,  -- 关联的操作ID（如账单ID）
+            FOREIGN KEY (user_id) REFERENCES users(user_id)
         )
         ''')
-        results['details'].append("创建新用户表成功")
+        results['details'].append("创建积分交易记录表成功")
         
-        # 4. 迁移用户数据
-        migration_sql = generate_migration_sql(conn, column_mappings)
-        c.execute(migration_sql)
-        results['details'].append("用户数据迁移成功")
+        # 3. 创建充值记录表
+        c.execute('''
+        CREATE TABLE IF NOT EXISTS recharge_records (
+            recharge_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            amount INTEGER NOT NULL,
+            payment_method TEXT NOT NULL,
+            payment_status TEXT NOT NULL,  -- 'pending', 'success', 'failed'
+            transaction_id TEXT,  -- 支付平台交易ID
+            points_added INTEGER NOT NULL,  -- 实际增加的积分数
+            FOREIGN KEY (user_id) REFERENCES users(user_id)
+        )
+        ''')
+        results['details'].append("创建充值记录表成功")
         
-        # 5. 替换用户表
-        c.execute('DROP TABLE users')
-        c.execute('ALTER TABLE users_new RENAME TO users')
-        results['details'].append("用户表更新成功")
+        # 4. 为所有现有用户添加初始积分
+        c.execute('''
+        UPDATE users 
+        SET points = 1000 
+        WHERE points IS NULL
+        ''')
+        results['details'].append("为现有用户添加初始积分成功")
         
-        # 6. 升级账单表
-        bills_results = upgrade_bills_table(conn)
-        results['details'].extend(bills_results['details'])
+        # 5. 修改bills表，添加积分消费字段
+        c.execute('''
+        ALTER TABLE bills 
+        ADD COLUMN points_cost INTEGER DEFAULT 0;
+        ''')
+        results['details'].append("账单表添加积分消费字段成功")
         
-        if not bills_results['success']:
-            raise DatabaseError(bills_results['message'])
+        # 6. 更新现有账单记录的积分消费
+        c.execute('''
+        UPDATE bills 
+        SET points_cost = input_letters + output_letters 
+        WHERE points_cost = 0;
+        ''')
+        results['details'].append("更新现有账单积分消费成功")
         
         conn.commit()
         results['success'] = True
@@ -302,7 +302,6 @@ def upgrade_database() -> dict:
         
     except Exception as e:
         conn.rollback()
-        cleanup_temp_tables(conn)
         results['message'] = f"数据库升级失败: {str(e)}"
         results['details'].append(f"错误详情: {str(e)}")
     

@@ -21,7 +21,7 @@ from modules.aar_generator import AARGenerator
 from user.admin import show_admin_panel
 from user.user_process import check_auth, handle_logout, UserManager
 from user.chat import show_chat_interface
-from bill.bill import show_bill_detail
+from bill.bill import BillManager, show_bill_detail
 from user.logger import display_logs
 from db.db_admin import show_db_admin
 from user.user_history import show_user_history
@@ -79,6 +79,14 @@ def main():
                 add_log("warning", "Logo图片未找到，请确保assets/logo.png存在")
             
             st.title(f"PRFAQ Pro - {st.session_state.user}")
+            
+            # 显示用户积分
+            user_mgr = UserManager()
+            bill_mgr = BillManager()
+            user_info = user_mgr.get_user_info(st.session_state.user)
+            if user_info:
+                points_info = bill_mgr.get_user_points(user_info['user_id'])
+                st.metric("当前积分", f"{points_info:,}")
             
             # 如果是管理员，显示管理员功能
             if st.session_state.user_role == 'admin':
@@ -143,10 +151,10 @@ def main():
                 st.session_state.current_section = 'history'
                 add_log("info", "进入历史记录查看")
             
-            if st.button("💰 账单", use_container_width=True):
+            if st.button("💰 积分明细", use_container_width=True):
                 clear_main_content()
-                st.session_state.show_bill_detail = True
-                add_log("info", "查看账单明细")
+                st.session_state.current_section = 'bill'
+                add_log("info", "查看积分明细")
             
             # 退出登录按钮
             if st.button("🚪 退出登录", use_container_width=True):
@@ -158,41 +166,34 @@ def main():
                 show_admin_panel()
             elif st.session_state.current_section == 'db_admin':
                 show_db_admin()
-            elif hasattr(st.session_state, 'show_bill_detail') and st.session_state.show_bill_detail:
-                show_bill_detail()
-            elif st.session_state.current_section == 'bill_test':
-                # 创建API客户端实例
+            elif st.session_state.current_section == 'chat_test':
                 api_client = APIClient(config)
                 show_chat_interface(api_client)
             elif st.session_state.current_section == 'history':
                 show_user_history()
+            elif st.session_state.current_section == 'bill':
+                show_bill_detail()
             elif st.session_state.current_section == 'all_in_one':
-                # 创建API客户端实例
                 api_client = APIClient(config)
                 all_in_one_generator = AllInOneGenerator(api_client)
                 all_in_one_generator.render()
             elif st.session_state.current_section == 'pr':
-                # 创API客户端例
                 api_client = APIClient(config)
                 pr_generator = PRGenerator(api_client)
                 pr_generator.render()
             elif st.session_state.current_section == 'faq':
-                # 创建API客户端实例
                 api_client = APIClient(config)
                 faq_generator = FAQGenerator(api_client)
                 faq_generator.generate_customer_faq()
             elif st.session_state.current_section == 'internal_faq':
-                # 创建API客户端实例
                 api_client = APIClient(config)
                 faq_generator = InternalFAQGenerator(api_client)
                 faq_generator.generate_internal_faq()
             elif st.session_state.current_section == 'mlp':
-                # 创建API客户端实例
                 api_client = APIClient(config)
                 mlp_generator = MLPGenerator(api_client)
                 mlp_generator.generate_mlp()
             elif st.session_state.current_section == 'aar':
-                # 创建API客户端实例
                 api_client = APIClient(config)
                 aar_generator = AARGenerator(api_client)
                 aar_generator.render()

@@ -45,6 +45,33 @@ content TEXT NOT NULL, -- 生成的内容
 FOREIGN KEY (user_id) REFERENCES users(user_id) -- 外键关联users表
 )
 
+## 4. 积分交易记录表 (point_transactions)
+sql
+CREATE TABLE point_transactions (
+transaction_id INTEGER PRIMARY KEY AUTOINCREMENT, -- 交易ID
+user_id TEXT NOT NULL, -- 关联的用户ID
+timestamp TEXT NOT NULL, -- 交易时间
+type TEXT NOT NULL, -- 交易类型（reward/consume/recharge/admin）
+amount INTEGER NOT NULL, -- 交易数量（正数增加/负数减少）
+balance INTEGER NOT NULL, -- 交易后余额
+description TEXT NOT NULL, -- 交易描述
+operation_id TEXT, -- 关联操作ID
+FOREIGN KEY (user_id) REFERENCES users(user_id) -- 外键关联users表
+)
+
+## 5. 充值记录表 (recharge_records)
+sql
+CREATE TABLE recharge_records (
+recharge_id INTEGER PRIMARY KEY AUTOINCREMENT, -- 充值记录ID
+user_id TEXT NOT NULL, -- 关联的用户ID
+timestamp TEXT NOT NULL, -- 充值时间
+amount INTEGER NOT NULL, -- 充值金额
+payment_method TEXT NOT NULL, -- 支付方式
+payment_status TEXT NOT NULL, -- 支付状态（pending/success/failed）
+transaction_id TEXT, -- 支付平台交易ID
+points_added INTEGER NOT NULL, -- 实际增加的积分数
+FOREIGN KEY (user_id) REFERENCES users(user_id) -- 外键关联users表
+)
 
 ## 字段说明
 
@@ -63,6 +90,7 @@ FOREIGN KEY (user_id) REFERENCES users(user_id) -- 外键关联users表
 - total_cost: 累计消费金额（人民币）
 - daily_chars_limit: 每日可用字符上限，默认100000
 - used_chars_today: 今日已使用的字符数
+- points: INTEGER DEFAULT 1000 - 用户积分余额
 
 ### bills表
 - bill_id: 自增的账单ID
@@ -80,6 +108,26 @@ FOREIGN KEY (user_id) REFERENCES users(user_id) -- 外键关联users表
 - timestamp: 记录时间，ISO格式
 - type: 记录类型，可选值：PR、FAQ、AAR等
 - content: 生成的具体内容
+
+### point_transactions表
+- transaction_id: 交易ID
+- user_id: 关联的用户ID
+- timestamp: 交易时间
+- type: 交易类型（reward/consume/recharge/admin）
+- amount: 交易数量（正数增加/负数减少）
+- balance: 交易后余额
+- description: 交易描述
+- operation_id: 关联操作ID
+
+### recharge_records表
+- recharge_id: 充值记录ID
+- user_id: 关联的用户ID
+- timestamp: 充值时间
+- amount: 充值金额
+- payment_method: 支付方式
+- payment_status: 支付状态（pending/success/failed）
+- transaction_id: 支付平台交易ID
+- points_added: 实际增加的积分数
 
 ## 注意事项
 1. 所有时间字段使用ISO格式存储

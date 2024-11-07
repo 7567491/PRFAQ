@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 from user.logger import add_log
 import os
+from db.db_upgrade import upgrade_database
 
 class UserManager:
     def __init__(self):
@@ -15,7 +16,20 @@ class UserManager:
         try:
             # 使用绝对路径
             db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'db', 'users.db')
-            return sqlite3.connect(db_path)
+            conn = sqlite3.connect(db_path)
+            
+            # 检查是否需要升级数据库
+            try:
+                # 尝试访问 points 列，如果不存在会抛出异常
+                c = conn.cursor()
+                c.execute("SELECT points FROM users LIMIT 1")
+            except sqlite3.OperationalError:
+                # 如果 points 列不存在，执行数据库升级
+                conn.close()  # 先关闭当前连接
+                upgrade_database()  # 执行升级
+                conn = sqlite3.connect(db_path)  # 重新连接
+            
+            return conn
         except Exception as e:
             print(f"数据库连接失败: {str(e)}")
             raise
@@ -58,7 +72,7 @@ class UserManager:
             c.execute('''
                 SELECT user_id, username, email, phone, org_name, role, is_active,
                        created_at, last_login, total_chars, total_cost,
-                       daily_chars_limit, used_chars_today
+                       daily_chars_limit, used_chars_today, points
                 FROM users WHERE username = ?
             ''', (username,))
             
@@ -78,7 +92,8 @@ class UserManager:
                     'total_chars': result[9],
                     'total_cost': result[10],
                     'daily_chars_limit': result[11],
-                    'used_chars_today': result[12]
+                    'used_chars_today': result[12],
+                    'points': result[13]
                 }
         except sqlite3.Error as e:
             add_log("error", f"获取用户信息失败: {str(e)}")

@@ -7,54 +7,10 @@ from db.db_init import init_database
 from db.read_db import read_database
 from db.db_restore import show_restore_interface
 from db.migrate_data import show_migrate_interface
+from db.db_table import show_table_info
+from db.db_upgrade import upgrade_database
 from user.logger import add_log
 import pandas as pd
-
-def show_table_info():
-    """显示表结构信息"""
-    st.markdown("### 数据库表结构")
-    
-    try:
-        conn = sqlite3.connect('db/users.db')
-        c = conn.cursor()
-        
-        # 获取所有表
-        c.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        tables = c.fetchall()
-        
-        for table in tables:
-            table_name = table[0]
-            with st.expander(f"表: {table_name}"):
-                # 获取表结构
-                c.execute(f"PRAGMA table_info({table_name})")
-                columns = c.fetchall()
-                
-                # 显示列信息
-                df = pd.DataFrame(columns, columns=[
-                    'cid', 'name', 'type', 'notnull', 'dflt_value', 'pk'
-                ])
-                st.dataframe(df)
-                
-                # 显示记录数
-                c.execute(f"SELECT COUNT(*) FROM {table_name}")
-                count = c.fetchone()[0]
-                st.write(f"记录数: {count:,}")
-                
-                # 显示示例数据（如果不是敏感表）
-                if table_name not in ['users']:  # 跳过显示用户表的示例数据
-                    c.execute(f"SELECT * FROM {table_name} LIMIT 5")
-                    sample_data = c.fetchall()
-                    if sample_data:
-                        c.execute(f"PRAGMA table_info({table_name})")
-                        column_names = [col[1] for col in c.fetchall()]
-                        sample_df = pd.DataFrame(sample_data, columns=column_names)
-                        st.write("示例数据:")
-                        st.dataframe(sample_df)
-        
-        conn.close()
-        
-    except Exception as e:
-        st.error(f"读取表结构失败: {str(e)}")
 
 def show_db_admin():
     """显示数据库管理界面"""
@@ -65,13 +21,14 @@ def show_db_admin():
     st.title("数据库管理")
     
     # 使用选项卡来组织不同功能
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         "📊 数据库状态",
         "🔧 初始化",
         "💾 备份",
         "♻️ 恢复",
         "📥 数据迁移",
-        "📋 表结构"
+        "📋 表结构",
+        "⚡ 数据库升级"
     ])
     
     with tab1:
@@ -119,6 +76,18 @@ def show_db_admin():
                         st.metric("活跃用户数", f"{db_info['history_stats']['unique_users']:,}")
                     with col8:
                         st.metric("记录天数", f"{db_info['history_stats']['unique_days']:,}")
+                    
+                    # 积分统计
+                    st.markdown("##### 积分统计")
+                    col9, col10, col11, col12 = st.columns(4)
+                    with col9:
+                        st.metric("总交易数", f"{db_info['points_stats']['total_transactions']:,}")
+                    with col10:
+                        st.metric("总奖励积分", f"{db_info['points_stats']['total_rewards']:,}")
+                    with col11:
+                        st.metric("总消费积分", f"{db_info['points_stats']['total_consumed']:,}")
+                    with col12:
+                        st.metric("活跃用户数", f"{db_info['points_stats']['unique_users']:,}")
                     
                     add_log("info", "查看数据库信息")
                 else:
@@ -192,3 +161,21 @@ def show_db_admin():
     
     with tab6:
         show_table_info()
+    
+    with tab7:
+        st.markdown("### 数据库升级")
+        st.warning("⚠️ 升级前请确保已备份数据库！")
+        
+        if st.button("开始升级", use_container_width=True):
+            with st.spinner("正在升级数据库..."):
+                results = upgrade_database()
+                
+                if results['success']:
+                    st.success(results['message'])
+                else:
+                    st.error(results['message'])
+                
+                # 显示详细信息
+                st.markdown("#### 升级详情")
+                for detail in results['details']:
+                    st.text(f"• {detail}")

@@ -75,26 +75,28 @@ def save_history(content: str, history_type: str = 'unknown'):
 def add_letters_record(input_letters: int, output_letters: int, api_name: str, operation: str) -> bool:
     """Add a new letters record"""
     try:
-        # 计算总字符数和费用
-        total_chars = input_letters + output_letters
-        total_cost = total_chars * 0.0001  # 每字符0.0001元
-        
-        # 更新数据库
-        user_mgr = UserManager()
-        bill_mgr = BillManager()
-        
         # 获取当前用户ID
+        user_mgr = UserManager()
         user_info = user_mgr.get_user_info(st.session_state.user)
         if not user_info:
             return False
-            
+        
         # 检查用户是否达到每日限制
         if not user_mgr.check_daily_limit(st.session_state.user):
             st.error("已达到每日字符使用限制")
             return False
-            
+        
+        # 检查积分是否足够
+        points_needed = input_letters + output_letters
+        bill_mgr = BillManager()
+        current_points = bill_mgr.get_user_points(user_info['user_id'])
+        
+        if current_points < points_needed:
+            st.error(f"积分不足，需要 {points_needed} 积分，当前剩余 {current_points} 积分")
+            return False
+        
         # 添加账单记录
-        bill_mgr.add_bill_record(
+        success = bill_mgr.add_bill_record(
             user_id=user_info['user_id'],
             api_name=api_name,
             operation=operation,
@@ -102,12 +104,13 @@ def add_letters_record(input_letters: int, output_letters: int, api_name: str, o
             output_letters=output_letters
         )
         
-        # 更新用户使用统计
-        user_mgr.update_usage_stats(
-            username=st.session_state.user,
-            chars=total_chars,
-            cost=total_cost
-        )
+        if not success:
+            st.error("记录使用量失败")
+            return False
+        
+        # 在侧边栏更新积分显示
+        if 'sidebar_points' in st.session_state:
+            st.session_state.sidebar_points = bill_mgr.get_user_points(user_info['user_id'])
         
         return True
             
@@ -119,3 +122,12 @@ def load_letters():
     """从数据库加载账单数据"""
     bill_mgr = BillManager()
     return bill_mgr.get_all_bills()
+
+def update_sidebar_points():
+    """更新侧边栏积分显示"""
+    if 'user' in st.session_state and st.session_state.user:
+        user_mgr = UserManager()
+        bill_mgr = BillManager()
+        user_info = user_mgr.get_user_info(st.session_state.user)
+        if user_info:
+            st.session_state.sidebar_points = bill_mgr.get_user_points(user_info['user_id'])
