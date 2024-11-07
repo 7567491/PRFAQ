@@ -18,7 +18,6 @@ font = "sans serif"
 gatherUsageStats = false
 
 [runner]
-# 添加运行器配置
+# 简化 runner 配置
 magicEnabled = true
-installTracer = true
 fastReruns = true
