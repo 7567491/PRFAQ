@@ -3,9 +3,9 @@ from datetime import datetime
 import os
 
 def backup_database():
-    """备份数据库"""
+    """备���数据库"""
     # 创建备份目录
-    backup_dir = 'user/backups'
+    backup_dir = 'db/backups'
     if not os.path.exists(backup_dir):
         os.makedirs(backup_dir)
     
@@ -15,7 +15,7 @@ def backup_database():
     
     # 复制数据库文件
     try:
-        shutil.copy2('user/users.db', backup_path)
+        shutil.copy2('db/users.db', backup_path)
         print(f"数据库已备份到: {backup_path}")
     except Exception as e:
         print(f"备份失败: {str(e)}")

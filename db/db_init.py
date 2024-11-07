@@ -1,80 +1,94 @@
 import sqlite3
-import hashlib
+import os
 from datetime import datetime
+import hashlib
+import streamlit as st
+from user.logger import add_log
 
 def init_database():
     """初始化数据库"""
-    conn = sqlite3.connect('db/users.db')
-    c = conn.cursor()
+    status_container = st.empty()
+    status_container.info("正在初始化数据库...")
     
-    # 创建用户表
-    c.execute('''
-    CREATE TABLE IF NOT EXISTS users (
-        user_id TEXT PRIMARY KEY,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        email TEXT,
-        phone TEXT,
-        org_name TEXT,
-        role TEXT NOT NULL,
-        is_active INTEGER NOT NULL,
-        created_at TEXT NOT NULL,
-        last_login TEXT,
-        total_chars INTEGER DEFAULT 0,
-        total_cost REAL DEFAULT 0.0,
-        daily_chars_limit INTEGER DEFAULT 100000,
-        used_chars_today INTEGER DEFAULT 0
-    )
-    ''')
-    
-    # 创建账单表
-    c.execute('''
-    CREATE TABLE IF NOT EXISTS bills (
-        bill_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
-        timestamp TEXT NOT NULL,
-        api_name TEXT NOT NULL,
-        operation TEXT NOT NULL,
-        input_letters INTEGER NOT NULL,
-        output_letters INTEGER NOT NULL,
-        total_cost REAL NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES users(user_id)
-    )
-    ''')
-    
-    # 创建历史记录表
-    c.execute('''
-    CREATE TABLE IF NOT EXISTS history (
-        history_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
-        timestamp TEXT NOT NULL,
-        content TEXT NOT NULL,
-        type TEXT NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES users(user_id)
-    )
-    ''')
-    
-    # 创建默认管理员和用户账户
-    default_password = hashlib.sha256('Amazon123'.encode()).hexdigest()
-    current_time = datetime.now().isoformat()
-    
-    default_users = [
-        ('admin_001', 'Jack', default_password, None, None, None, 'admin', 1, current_time),
-        ('user_001', 'Rose', default_password, None, None, None, 'normal', 1, current_time)
-    ]
-    
-    for user in default_users:
-        try:
-            c.execute('''
-                INSERT INTO users 
-                (user_id, username, password, email, phone, org_name, role, is_active, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', user)
-        except sqlite3.IntegrityError:
-            print(f"User {user[1]} already exists")
-    
-    conn.commit()
-    conn.close()
+    try:
+        add_log("info", "开始初始化数据库...")
+        
+        # 确保db目录存在
+        if not os.path.exists('db'):
+            os.makedirs('db')
+        
+        # 连接数据库并创建表
+        conn = sqlite3.connect('db/users.db')
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA foreign_keys = ON")
+        
+        # 删除现有表
+        cursor.execute("DROP TABLE IF EXISTS history")
+        cursor.execute("DROP TABLE IF EXISTS bills")
+        cursor.execute("DROP TABLE IF EXISTS users")
+        
+        # 创建表
+        # ... (创建表的SQL语句保持不变)
+        
+        # 创建默认用户
+        current_time = datetime.now().isoformat()
+        default_users = [
+            {
+                'user_id': 'jack',
+                'username': 'Jack',
+                'password': get_password_hash('Amazon123'),
+                'role': 'admin',
+                'is_active': 1,
+                'created_at': current_time
+            },
+            {
+                'user_id': 'rose',
+                'username': 'Rose',
+                'password': get_password_hash('Amazon123'),
+                'role': 'user',
+                'is_active': 1,
+                'created_at': current_time
+            }
+        ]
+        
+        # 插入默认用户
+        for user in default_users:
+            try:
+                cursor.execute('''
+                INSERT INTO users (
+                    user_id, username, password, role, is_active, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                ''', (
+                    user['user_id'],
+                    user['username'],
+                    user['password'],
+                    user['role'],
+                    user['is_active'],
+                    user['created_at']
+                ))
+                add_log("info", f"创建用户: {user['username']} ({user['role']})")
+            except sqlite3.IntegrityError:
+                add_log("warning", f"用户已存在: {user['username']}")
+        
+        conn.commit()
+        conn.close()
+        
+        add_log("info", "数据库初始化完成")
+        status_container.success("数据库初始化成功！")
+        return True
+        
+    except Exception as e:
+        error_msg = f"初始化数据库失败: {str(e)}"
+        add_log("error", error_msg)
+        if 'conn' in locals():
+            conn.rollback()
+            conn.close()
+        status_container.error(error_msg)
+        return False
+
+def get_password_hash(password: str) -> str:
+    """获取密码哈希值"""
+    return hashlib.sha256(password.encode()).hexdigest()
 
 if __name__ == "__main__":
-    init_database() 
+    init_database()

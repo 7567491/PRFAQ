@@ -2,6 +2,7 @@ import streamlit as st
 import sqlite3
 from datetime import datetime
 from user.user_process import UserManager
+from user.logger import add_log
 
 def show_admin_panel():
     """显示管理员面板"""
@@ -21,6 +22,7 @@ def show_admin_panel():
                created_at, last_login, total_chars, total_cost,
                daily_chars_limit, used_chars_today
         FROM users
+        ORDER BY created_at DESC
     ''')
     users = c.fetchall()
     conn.close()
@@ -59,18 +61,20 @@ def show_admin_panel():
                             (new_status, user[0]))
                     conn.commit()
                     conn.close()
+                    add_log("info", f"用户 {user[1]} 状态已更新为 {'活跃' if new_status else '禁用'}")
                     st.rerun()
             
             with col4:
                 if st.button("重置密码", key=f"reset_{user[0]}"):
                     conn = user_mgr.get_db_connection()
                     c = conn.cursor()
-                    new_password = "123456"  # 默认密码
+                    new_password = "Amazon123"  # 默认密码
                     hashed_password = user_mgr.hash_password(new_password)
                     c.execute('UPDATE users SET password = ? WHERE user_id = ?', 
                             (hashed_password, user[0]))
                     conn.commit()
                     conn.close()
+                    add_log("info", f"用户 {user[1]} 密码已重置")
                     st.success(f"密码已重置为: {new_password}")
             
             with col5:
@@ -85,5 +89,6 @@ def show_admin_panel():
                             (new_limit, user[0]))
                     conn.commit()
                     conn.close()
+                    add_log("info", f"用户 {user[1]} 每日字符限制已更新为 {new_limit}")
                     st.success("每日字符限制已更新")
                     st.rerun()

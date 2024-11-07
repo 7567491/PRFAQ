@@ -34,23 +34,13 @@ class BillManager:
     def add_bill_record(self, user_id: str, api_name: str, operation: str,
                        input_letters: int, output_letters: int):
         """添加账单记录"""
-        total_letters = input_letters + output_letters
-        total_cost = total_letters * self.COST_PER_CHAR
+        total_cost = (input_letters + output_letters) * self.COST_PER_CHAR
         
         conn = self.user_mgr.get_db_connection()
         c = conn.cursor()
         
         try:
-            # 检查表结构
-            c.execute("PRAGMA table_info(bills)")
-            columns = {row[1] for row in c.fetchall()}
-            
-            # 如果表结构不正确，重新创建表
-            if 'total_cost' not in columns:
-                c.execute('DROP TABLE IF EXISTS bills')
-                self.init_bill_table()
-            
-            # 插入记录
+            # 添加账单记录
             c.execute('''
             INSERT INTO bills (
                 user_id, timestamp, api_name, operation,
@@ -66,14 +56,27 @@ class BillManager:
                 total_cost
             ))
             
-            conn.commit()
+            # 更新用户使用统计
+            c.execute('''
+            UPDATE users 
+            SET total_chars = total_chars + ?,
+                total_cost = total_cost + ?,
+                used_chars_today = used_chars_today + ?
+            WHERE user_id = ?
+            ''', (
+                input_letters + output_letters,
+                total_cost,
+                input_letters + output_letters,
+                user_id
+            ))
             
-            return total_letters, total_cost
+            conn.commit()
+            return True
             
         except Exception as e:
             conn.rollback()
-            raise e
-        
+            print(f"记录账单失败: {str(e)}")
+            return False
         finally:
             conn.close()
     

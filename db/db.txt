@@ -1,0 +1,102 @@
+# PRFAQ Pro 数据库结构说明
+
+## 1. 用户表 (users) 
+sql
+CREATE TABLE users (
+user_id TEXT PRIMARY KEY, -- 用户唯一标识
+username TEXT UNIQUE NOT NULL, -- 用户名
+password TEXT NOT NULL, -- 密码（SHA-256加密）
+email TEXT, -- 邮箱
+phone TEXT, -- 电话
+org_name TEXT, -- 组织名称
+role TEXT NOT NULL, -- 用户角色（admin/user）
+is_active INTEGER NOT NULL, -- 账户状态（1:活跃，0:禁用）
+created_at TEXT NOT NULL, -- 创建时间
+last_login TEXT, -- 最后登录时间
+total_chars INTEGER DEFAULT 0, -- 总字符使用量
+total_cost REAL DEFAULT 0.0, -- 总消费金额
+daily_chars_limit INTEGER DEFAULT 100000, -- 每日字符限制
+used_chars_today INTEGER DEFAULT 0 -- 今日已用字符数
+)
+
+
+## 2. 账单表 (bills)
+sql
+CREATE TABLE bills (
+bill_id INTEGER PRIMARY KEY AUTOINCREMENT, -- 账单ID
+user_id TEXT NOT NULL, -- 关联的用户ID
+timestamp TEXT NOT NULL, -- 记录时间
+api_name TEXT NOT NULL, -- API名称
+operation TEXT NOT NULL, -- 操作类型
+input_letters INTEGER NOT NULL, -- 输入字符数
+output_letters INTEGER NOT NULL, -- 输出字符数
+total_cost REAL NOT NULL, -- 总费用
+FOREIGN KEY (user_id) REFERENCES users(user_id) -- 外键关联users表
+)
+
+## 3. 历史记录表 (history)
+sql
+CREATE TABLE history (
+history_id INTEGER PRIMARY KEY AUTOINCREMENT, -- 历史记录ID
+user_id TEXT NOT NULL, -- 关联的用户ID
+timestamp TEXT NOT NULL, -- 记录时间
+type TEXT NOT NULL, -- 记录类型（PR/FAQ/AAR等）
+content TEXT NOT NULL, -- 生成的内容
+FOREIGN KEY (user_id) REFERENCES users(user_id) -- 外键关联users表
+)
+
+
+## 字段说明
+
+### users表
+- user_id: 用户唯一标识，使用文本格式
+- username: 登录用户名，不允许重复
+- password: SHA-256加密后的密码
+- email: 可选的邮箱地址
+- phone: 可选的电话号码
+- org_name: 可选的组织名称
+- role: 用户角色，可选值：admin（管理员）、user（普通用户）
+- is_active: 账户状态，1表示活跃，0表示禁用
+- created_at: 账户创建时间，ISO格式
+- last_login: 最后登录时间，ISO格式
+- total_chars: 累计使用的总字符数
+- total_cost: 累计消费金额（人民币）
+- daily_chars_limit: 每日可用字符上限，默认100000
+- used_chars_today: 今日已使用的字符数
+
+### bills表
+- bill_id: 自增的账单ID
+- user_id: 关联的用户ID
+- timestamp: 记录时间，ISO格式
+- api_name: 使用的API名称
+- operation: 具体操作类型（如：生成PR、生成FAQ等）
+- input_letters: 输入的字符数
+- output_letters: 输出的字符数
+- total_cost: 本次操作费用（人民币）
+
+### history表
+- history_id: 自增的历史记录ID
+- user_id: 关联的用户ID
+- timestamp: 记录时间，ISO格式
+- type: 记录类型，可选值：PR、FAQ、AAR等
+- content: 生成的具体内容
+
+## 注意事项
+1. 所有时间字段使用ISO格式存储
+2. 费用计算：每个字符（包括输入和输出）费用为0.0001元
+3. 字符统计包括输入和输出的总和
+4. 每日限额在每日零点自动重置
+5. 数据库使用SQLite3，文件位置：db/users.db
+6. 建议定期备份数据库文件
+
+## 默认数据, 仅在初始化时候写入
+1. 默认管理员账户：
+   - username: Jack
+   - password: Amazon123
+   - role: admin
+
+2. 默认普通用户：
+   - username: Rose
+   - password: Amazon123
+   - role: user
+

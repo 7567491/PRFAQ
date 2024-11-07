@@ -4,6 +4,7 @@ import hashlib
 from datetime import datetime
 from typing import Optional, Dict, Any
 from user.logger import add_log
+import os
 
 class UserManager:
     def __init__(self):
@@ -11,7 +12,13 @@ class UserManager:
     
     def get_db_connection(self):
         """获取数据库连接"""
-        return sqlite3.connect(self.db_path)
+        try:
+            # 使用绝对路径
+            db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'db', 'users.db')
+            return sqlite3.connect(db_path)
+        except Exception as e:
+            print(f"数据库连接失败: {str(e)}")
+            raise
     
     def hash_password(self, password: str) -> str:
         """密码加密"""
@@ -22,13 +29,25 @@ class UserManager:
         conn = self.get_db_connection()
         c = conn.cursor()
         
-        c.execute('SELECT password FROM users WHERE username = ?', (username,))
-        result = c.fetchone()
-        conn.close()
-        
-        if result and result[0] == self.hash_password(password):
-            return True
-        return False
+        try:
+            hashed_input = self.hash_password(password)
+            # 同时检查用户是否活跃
+            c.execute('''
+                SELECT username, password, is_active 
+                FROM users 
+                WHERE username = ?
+            ''', (username,))
+            result = c.fetchone()
+            
+            if result and result[1] == hashed_input:
+                if result[2] == 1:  # 检查是否活跃
+                    return True
+                else:
+                    print("账户已被禁用")
+                    return False
+            return False
+        finally:
+            conn.close()
     
     def get_user_info(self, username: str) -> Optional[Dict[str, Any]]:
         """获取用户信息"""

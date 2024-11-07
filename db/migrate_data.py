@@ -4,6 +4,8 @@ from datetime import datetime
 from pathlib import Path
 import streamlit as st
 from user.logger import add_log
+import os
+import shutil
 
 def get_rose_user_id() -> str:
     """获取Rose的user_id"""
@@ -17,27 +19,6 @@ def get_rose_user_id() -> str:
     if not result:
         raise Exception("未找到用户 Rose")
     return result[0]
-
-def calculate_usage_stats(user_id: str) -> dict:
-    """计算用户的使用统计"""
-    conn = sqlite3.connect('db/users.db')
-    c = conn.cursor()
-    
-    # 获取账单统计
-    c.execute('''
-        SELECT SUM(input_letters + output_letters) as total_chars,
-               SUM(total_cost) as total_cost
-        FROM bills
-        WHERE user_id = ?
-    ''', (user_id,))
-    
-    result = c.fetchone()
-    conn.close()
-    
-    return {
-        'total_chars': result[0] or 0,
-        'total_cost': result[1] or 0.0
-    }
 
 def migrate_bills() -> dict:
     """将历史账单数据迁移到数据库"""
@@ -117,27 +98,31 @@ def migrate_bills() -> dict:
         
         results['details'].append(f"账单记录迁移: {success_count} 成功, {skip_count} 跳过, {error_count} 失败")
         
-        # 更新Rose的使用统计
-        stats = calculate_usage_stats(user_id)
+        # 更新用户使用统计
         c.execute('''
             UPDATE users 
-            SET total_chars = ?,
-                total_cost = ?
+            SET total_chars = (
+                    SELECT SUM(input_letters + output_letters) 
+                    FROM bills 
+                    WHERE user_id = ?
+                ),
+                total_cost = (
+                    SELECT SUM(total_cost) 
+                    FROM bills 
+                    WHERE user_id = ?
+                )
             WHERE user_id = ?
-        ''', (
-            stats['total_chars'],
-            stats['total_cost'],
-            user_id
-        ))
+        ''', (user_id, user_id, user_id))
+        
         results['details'].append("更新用户使用统计成功")
-        results['details'].append(f"总字符数: {stats['total_chars']:,}")
-        results['details'].append(f"总消费: ¥{stats['total_cost']:.4f}")
         
         conn.commit()
         results['success'] = True
         results['message'] = "账单数据迁移完成"
         
     except Exception as e:
+        if 'conn' in locals():
+            conn.rollback()
         results['message'] = f"迁移过程出错: {str(e)}"
     finally:
         if 'conn' in locals():
@@ -188,13 +173,14 @@ def migrate_history() -> dict:
                     
                     if c.fetchone()[0] == 0:  # 如果不存在重复记录
                         c.execute('''
-                            INSERT INTO history (user_id, timestamp, content, type)
-                            VALUES (?, ?, ?, ?)
+                            INSERT INTO history (
+                                user_id, timestamp, type, content
+                            ) VALUES (?, ?, ?, ?)
                         ''', (
                             user_id,
                             record['timestamp'],
-                            record['content'],
-                            record.get('type', 'unknown')
+                            record.get('type', 'unknown'),
+                            record['content']
                         ))
                         success_count += 1
                     else:
@@ -210,6 +196,8 @@ def migrate_history() -> dict:
         results['message'] = "历史记录迁移完成"
         
     except Exception as e:
+        if 'conn' in locals():
+            conn.rollback()
         results['message'] = f"迁移过程出错: {str(e)}"
     finally:
         if 'conn' in locals():
