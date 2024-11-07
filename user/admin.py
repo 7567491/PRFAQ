@@ -86,10 +86,12 @@ def show_admin_panel():
             
             # 字符限制管理
             with col5:
-                new_limit = st.number_input("修改每日字符限制", 
-                                          min_value=0, 
-                                          value=user[11],
-                                          key=f"limit_{user[0]}")
+                new_limit = st.number_input(
+                    "每日字符限制", 
+                    min_value=0, 
+                    value=user[11],
+                    key=f"limit_{user[0]}"
+                )
                 if st.button("更新限制", key=f"update_limit_{user[0]}"):
                     conn = user_mgr.get_db_connection()
                     c = conn.cursor()
@@ -103,15 +105,21 @@ def show_admin_panel():
             
             # 积分管理
             st.markdown("#### 积分管理")
-            points_amount = st.number_input("积分数量", 
-                                          value=100,
-                                          step=100,
-                                          key=f"points_{user[0]}")
-            points_type = st.selectbox("操作类型",
-                                     ["奖励", "扣除"],
-                                     key=f"points_type_{user[0]}")
-            points_reason = st.text_input("操作原因", 
-                                        key=f"points_reason_{user[0]}")
+            points_amount = st.number_input(
+                "调整积分数量", 
+                value=100,
+                step=100,
+                key=f"points_{user[0]}"
+            )
+            points_type = st.selectbox(
+                "操作类型",
+                ["奖励", "扣除"],
+                key=f"points_type_{user[0]}"
+            )
+            points_reason = st.text_input(
+                "操作原因",
+                key=f"points_reason_{user[0]}"
+            )
             
             if st.button("执行积分操作", key=f"update_points_{user[0]}"):
                 if points_reason:

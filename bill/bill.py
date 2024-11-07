@@ -1,9 +1,15 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import plotly.express as px
 from user.user_process import UserManager
 from user.logger import add_log
+
+# 尝试导入 plotly，如果不可用则不使用图表功能
+try:
+    import plotly.express as px
+    HAS_PLOTLY = True
+except ImportError:
+    HAS_PLOTLY = False
 
 class BillManager:
     def __init__(self):
@@ -309,13 +315,17 @@ def show_bill_detail():
     history_df = bill_mgr.get_points_history(user_info['user_id'])
     
     if not history_df.empty:
-        # 添加积分趋势图
+        # 添加积分趋势图（如果有 plotly）
         st.markdown("#### 积分趋势")
-        fig = px.line(history_df, 
-                     x='timestamp', 
-                     y='balance',
-                     title='积分余额变化趋势')
-        st.plotly_chart(fig, use_container_width=True)
+        if HAS_PLOTLY:
+            fig = px.line(history_df, 
+                         x='timestamp', 
+                         y='balance',
+                         title='积分余额变化趋势')
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            # 如果没有 plotly，使用 streamlit 的基本图表
+            st.line_chart(history_df.set_index('timestamp')['balance'])
     
     # 获取账单记录
     records = bill_mgr.get_user_bills(user_info['user_id'])
@@ -335,7 +345,8 @@ def show_bill_detail():
                 '费用(元)': '{:.4f}',
                 '消费积分': '{:,}'
             }),
-            use_container_width=True
+            use_container_width=True,
+            height=400
         )
     else:
         st.info("暂无账单记录")
