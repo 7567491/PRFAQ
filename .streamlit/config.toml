@@ -1,8 +1,9 @@
 [server]
-headless = false
+headless = true
 port = 8501
 enableCORS = true
 enableXsrfProtection = true
+address = "0.0.0.0"
 
 [theme]
 # 深色主题设置
@@ -15,3 +16,9 @@ font = "sans serif"
 
 [browser]
 gatherUsageStats = false
+
+[runner]
+# 添加运行器配置
+magicEnabled = true
+installTracer = true
+fastReruns = true
