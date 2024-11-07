@@ -186,7 +186,7 @@ def show_login_page():
         """, unsafe_allow_html=True)
         
         username = st.text_input("用户名", 
-                               value="Jack",  # 设置默认用户名
+                               value="Rose",  # 设置默认用户名
                                key="username_input", 
                                autocomplete="username")
         password = st.text_input("密码", 
