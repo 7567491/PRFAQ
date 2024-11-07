@@ -24,6 +24,7 @@ from user.chat import show_chat_interface
 from user.bill import show_bill_detail
 from user.logger import display_logs
 from db.db_admin import show_db_admin
+from user.user_history import show_user_history
 
 def clear_main_content():
     """Clear all content in the main area except core sentence and logs"""
@@ -79,10 +80,28 @@ def main():
             
             st.title(f"PRFAQ Pro - {st.session_state.user}")
             
-            # Navigation buttons
-            st.header("主要功能")
+            # 如果是管理员，显示管理员功能
+            if st.session_state.user_role == 'admin':
+                st.header("管理员功能")
+                
+                if st.button("👥 用户管理", use_container_width=True):
+                    clear_main_content()
+                    st.session_state.current_section = 'admin'
+                    add_log("info", "进入用户管理面板")
+                
+                if st.button("🗄️ 数据库管理", use_container_width=True):
+                    clear_main_content()
+                    st.session_state.current_section = 'db_admin'
+                    add_log("info", "进入数据库管理面板")
+                
+                if st.button("🧪 AI聊天测试", use_container_width=True):
+                    clear_main_content()
+                    st.session_state.current_section = 'chat_test'
+                    add_log("info", "进入AI聊天测试")
             
             # 主要功能按钮
+            st.header("主要功能")
+            
             if st.button("📰 虚拟新闻稿", use_container_width=True):
                 clear_main_content()
                 st.session_state.current_section = 'pr'
@@ -119,22 +138,10 @@ def main():
             # 系统功能按钮
             st.header("系统功能")
             
-            # 添加管理员面板入口
-            if st.session_state.user_role == 'admin':
-                if st.button("👥 用户管理", use_container_width=True):
-                    clear_main_content()
-                    st.session_state.current_section = 'admin'
-                    add_log("info", "进入用户管理面板")
-                    
-                if st.button("🗄️ 数据库管理", use_container_width=True):
-                    clear_main_content()
-                    st.session_state.current_section = 'db_admin'
-                    add_log("info", "进入数据库管理面板")
-            
-            if st.button("🧪 AI聊天测试", use_container_width=True):
+            if st.button("📜 历史查看", use_container_width=True):
                 clear_main_content()
-                st.session_state.current_section = 'bill_test'
-                add_log("info", "切换到AI聊天测试模式")
+                st.session_state.current_section = 'history'
+                add_log("info", "进入历史记录查看")
             
             if st.button("💰 账单", use_container_width=True):
                 clear_main_content()
@@ -157,9 +164,8 @@ def main():
                 # 创建API客户端实例
                 api_client = APIClient(config)
                 show_chat_interface(api_client)
-            elif st.session_state.current_section == 'history' and hasattr(st.session_state, 'show_history_detail') and st.session_state.show_history_detail:
-                st.markdown(f"### 生成记录 - {st.session_state.selected_history['timestamp']}")
-                st.markdown(st.session_state.selected_history['content'])
+            elif st.session_state.current_section == 'history':
+                show_user_history()
             elif st.session_state.current_section == 'all_in_one':
                 # 创建API客户端实例
                 api_client = APIClient(config)
