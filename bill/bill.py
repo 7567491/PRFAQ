@@ -10,6 +10,7 @@ try:
     HAS_PLOTLY = True
 except ImportError:
     HAS_PLOTLY = False
+    add_log("warning", "Plotly 未安装，将使用基本图表功能")
 
 class BillManager:
     def __init__(self):
@@ -315,17 +316,30 @@ def show_bill_detail():
     history_df = bill_mgr.get_points_history(user_info['user_id'])
     
     if not history_df.empty:
-        # 添加积分趋势图（如果有 plotly）
+        # 添加积分趋势图
         st.markdown("#### 积分趋势")
-        if HAS_PLOTLY:
-            fig = px.line(history_df, 
-                         x='timestamp', 
-                         y='balance',
-                         title='积分余额变化趋势')
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            # 如果没有 plotly，使用 streamlit 的基本图表
-            st.line_chart(history_df.set_index('timestamp')['balance'])
+        try:
+            if HAS_PLOTLY:
+                # 使用 plotly 绘制更美观的图表
+                fig = px.line(history_df, 
+                            x='timestamp', 
+                            y='balance',
+                            title='积分余额变化趋势')
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                # 使用 streamlit 的基本图表功能
+                history_df['timestamp'] = pd.to_datetime(history_df['timestamp'])
+                st.line_chart(
+                    history_df.set_index('timestamp')['balance'],
+                    use_container_width=True
+                )
+        except Exception as e:
+            # 如果绘图出错，记录日志并使用基本图表
+            add_log("error", f"绘制积分趋势图失败: {str(e)}")
+            st.line_chart(
+                history_df.set_index('timestamp')['balance'],
+                use_container_width=True
+            )
     
     # 获取账单记录
     records = bill_mgr.get_user_bills(user_info['user_id'])

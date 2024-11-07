@@ -11,7 +11,7 @@ Flask-WTF==1.2.1
 Werkzeug==3.0.1
 
 # Data Processing
-pandas==2.2.0
+pandas==2.1.4
 numpy==1.26.3
 
 # HTTP Requests
