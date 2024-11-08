@@ -1,0 +1,26 @@
+import json
+import sqlite3
+
+def save_test_result(user_id, test_result):
+    """保存测试结果到数据库"""
+    try:
+        # 将字典转换为 JSON 字符串
+        result_json = json.dumps(test_result)
+        
+        # 连接到数据库
+        conn = sqlite3.connect('your_database.db')
+        cursor = conn.cursor()
+        
+        # 插入数据
+        cursor.execute('''
+            INSERT INTO test_results (user_id, result_json)
+            VALUES (?, ?)
+        ''', (user_id, result_json))
+        
+        # 提交事务
+        conn.commit()
+        
+    except sqlite3.Error as e:
+        print(f"保存测试结果失败: {e}")
+    finally:
+        conn.close() 

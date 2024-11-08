@@ -106,8 +106,8 @@ FOREIGN KEY (user_id) REFERENCES users(user_id) -- 外键关联users表
 - history_id: 自增的历史记录ID
 - user_id: 关联的用户ID
 - timestamp: 记录时间，ISO格式
-- type: 记录类型，可选值：PR、FAQ、AAR等
-- content: 生成的具体内容
+- type: 记录类型，可选值：PR、FAQ、AAR、all in one, career等
+- content: 生成的具体内容，包括职业测评内容
 
 ### point_transactions表
 - transaction_id: 交易ID

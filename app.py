@@ -25,6 +25,9 @@ from bill.bill import BillManager, show_bill_detail
 from user.logger import display_logs
 from db.db_admin import show_db_admin
 from user.user_history import show_user_history
+from db.db_upgrade import check_and_upgrade
+import sys
+import traceback
 
 def clear_main_content():
     """Clear all content in the main area except core sentence and logs"""
@@ -48,25 +51,55 @@ def clear_main_content():
 
 def main():
     try:
-        # Load configurations
-        config = load_config()
-        templates = load_templates()
+        # 检查并升级数据库
+        upgrade_result = check_and_upgrade()
+        if not upgrade_result:
+            st.error("数据库升级失败，请检查日志")
+            add_log("error", "数据库升级失败，程序无法继续运行")
+            return
         
-        st.set_page_config(
-            page_title=templates["page_title"],
-            layout="wide"
-        )
+        # Load configurations
+        config = None
+        templates = None
+        try:
+            config = load_config()
+            if not config:
+                st.error("配置文件加载失败：config 为空")
+                add_log("error", "配置文件加载失败：config 为空")
+                return
+                
+            templates = load_templates()
+            if not templates:
+                st.error("模板文件加载失败：templates 为空")
+                add_log("error", "模板文件加载失败：templates 为空")
+                return
+                
+        except Exception as e:
+            st.error(f"加载配置文件失败: {str(e)}")
+            add_log("error", f"加载配置文件失败: {str(e)}")
+            return
+            
+        # 设置页面配置
+        try:
+            st.set_page_config(
+                page_title=templates.get("page_title", "PRFAQ Pro"),
+                layout="wide"
+            )
+        except Exception as e:
+            st.error(f"设置页面配置失败: {str(e)}")
+            add_log("error", f"设置页面配置失败: {str(e)}")
+            return
         
         # 检查用户是否已登录
         if not check_auth():
             return
-        
+            
         # Initialize session state
         if 'current_section' not in st.session_state:
             st.session_state.current_section = 'pr'
         if 'logs' not in st.session_state:
             st.session_state.logs = []
-        
+            
         # 创建侧边栏
         with st.sidebar:
             # 添加logo（带错误处理）
@@ -108,6 +141,11 @@ def main():
             # 主要功能按钮
             st.header("主要功能")
             
+            if st.button("🎯 职业测试", use_container_width=True):
+                clear_main_content()
+                st.session_state.current_section = 'career_test'
+                add_log("info", "进入职业测试")
+
             if st.button("📰 虚拟新闻稿", use_container_width=True):
                 clear_main_content()
                 st.session_state.current_section = 'pr'
@@ -221,6 +259,63 @@ def render_main_content(config, templates):
         api_client = APIClient(config)
         aar_generator = AARGenerator(api_client)
         aar_generator.render()
+    elif st.session_state.current_section == 'career_test':
+        try:
+            add_log("info", "开始加载职业测试模块...")
+            
+            # 检查必要的目录和文件
+            test_dir = Path("test")
+            if not test_dir.exists():
+                raise FileNotFoundError("test目录不存在")
+            add_log("info", f"test目录存在: {test_dir.absolute()}")
+            
+            # 检查数据目录
+            data_dir = test_dir / "data"
+            if not data_dir.exists():
+                raise FileNotFoundError("test/data目录不存在")
+            add_log("info", f"data目录存在: {data_dir.absolute()}")
+            
+            # 检查必要的数据文件
+            required_files = [
+                "personality_questions.json",
+                "leadership_principles.json",
+                "mbti_descriptions.json",
+                "career_suggestions.json"
+            ]
+            for file in required_files:
+                if not (data_dir / file).exists():
+                    raise FileNotFoundError(f"数据文件缺失: {file}")
+                add_log("info", f"数据文件存在: {file}")
+            
+            # 尝试导入模块
+            add_log("info", "尝试导入CareerTest类...")
+            from test.test import CareerTest
+            add_log("info", "成功导入CareerTest类")
+            
+            # 初始化测试模块
+            career_test = CareerTest()
+            add_log("info", "成功初始化CareerTest实例")
+            
+            # 渲染测试界面
+            career_test.render()
+            add_log("info", "成功渲染职业测试界面")
+            
+        except ImportError as e:
+            error_msg = f"导入模块失败: {str(e)}\n"
+            error_msg += f"Python路径: {sys.path}\n"
+            error_msg += f"当前目录: {Path.cwd()}"
+            st.error(error_msg)
+            add_log("error", error_msg)
+        except FileNotFoundError as e:
+            error_msg = f"文件不存在: {str(e)}"
+            st.error(error_msg)
+            add_log("error", error_msg)
+        except Exception as e:
+            error_msg = f"加载职业测试模块失败: {str(e)}\n"
+            error_msg += f"错误类型: {type(e).__name__}\n"
+            error_msg += f"错误位置: {traceback.format_exc()}"
+            st.error(error_msg)
+            add_log("error", error_msg)
     else:
         st.info(f"{templates['sections'][st.session_state.current_section]['title']}能正在开发中...")
 
