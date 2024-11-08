@@ -89,9 +89,24 @@ def show_login_page():
         # 创建两列布局放置按钮
         col1, col2 = st.columns([1, 1])
         with col1:
-            submitted = st.form_submit_button("录", use_container_width=True)
+            try:
+                submitted = st.form_submit_button("用户登录", use_container_width=True)
+            except Exception as e:
+                # 如果出现渲染错误，尝试使用备选文本
+                add_log("warning", f"登录按钮渲染出错: {str(e)}, 使用备选文本")
+                try:
+                    submitted = st.form_submit_button("登录", use_container_width=True)
+                except Exception as e:
+                    # 如果备选文本也失败，使用最简单的文本
+                    add_log("error", f"备选登录按钮渲染也失败: {str(e)}, 使用基础文本")
+                    submitted = st.form_submit_button("登", use_container_width=True)
         with col2:
-            register = st.form_submit_button("👉 新用户注册", use_container_width=True)
+            try:
+                register = st.form_submit_button("👉 新用户注册", use_container_width=True)
+            except Exception as e:
+                # 如果注册按钮渲染出错，使用简单文本
+                add_log("warning", f"注册按钮渲染出错: {str(e)}, 使用简单文本")
+                register = st.form_submit_button("注册", use_container_width=True)
         
         if submitted:
             if username and password:
