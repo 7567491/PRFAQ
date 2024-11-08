@@ -67,9 +67,7 @@ def main():
         if 'logs' not in st.session_state:
             st.session_state.logs = []
         
-        # Create main content and log columns
-        main_col, log_col = st.columns([5, 1])
-        
+        # 创建侧边栏
         with st.sidebar:
             # 添加logo（带错误处理）
             try:
@@ -160,59 +158,71 @@ def main():
             if st.button("🚪 退出登录", use_container_width=True):
                 handle_logout()
         
-        # Main content area
-        with main_col:
-            if st.session_state.current_section == 'admin':
-                show_admin_panel()
-            elif st.session_state.current_section == 'db_admin':
-                show_db_admin()
-            elif st.session_state.current_section == 'chat_test':
-                api_client = APIClient(config)
-                show_chat_interface(api_client)
-            elif st.session_state.current_section == 'history':
-                show_user_history()
-            elif st.session_state.current_section == 'bill':
-                show_bill_detail()
-            elif st.session_state.current_section == 'all_in_one':
-                api_client = APIClient(config)
-                all_in_one_generator = AllInOneGenerator(api_client)
-                all_in_one_generator.render()
-            elif st.session_state.current_section == 'pr':
-                api_client = APIClient(config)
-                pr_generator = PRGenerator(api_client)
-                pr_generator.render()
-            elif st.session_state.current_section == 'faq':
-                api_client = APIClient(config)
-                faq_generator = FAQGenerator(api_client)
-                faq_generator.generate_customer_faq()
-            elif st.session_state.current_section == 'internal_faq':
-                api_client = APIClient(config)
-                faq_generator = InternalFAQGenerator(api_client)
-                faq_generator.generate_internal_faq()
-            elif st.session_state.current_section == 'mlp':
-                api_client = APIClient(config)
-                mlp_generator = MLPGenerator(api_client)
-                mlp_generator.generate_mlp()
-            elif st.session_state.current_section == 'aar':
-                api_client = APIClient(config)
-                aar_generator = AARGenerator(api_client)
-                aar_generator.render()
-            else:
-                st.info(f"{templates['sections'][st.session_state.current_section]['title']}能正在开发中...")
+        # 根据用户角色决定布局
+        if st.session_state.user_role == 'admin':
+            # 管理员显示日志，使用 5:1 的布局
+            main_col, log_col = st.columns([5, 1])
             
-            # Log panel
+            # 主内容区域
+            with main_col:
+                render_main_content(config, templates)
+            
+            # 日志面板
             with log_col:
                 display_logs()
                 # Add clear logs button
                 if st.button("清除日志", key="clear_logs"):
                     st.session_state.logs = []
                     add_log("info", "日志已清除")
+        else:
+            # 普通用户不显示日志，直接渲染主内容
+            render_main_content(config, templates)
         
     except Exception as e:
         error_msg = f"程序运行出错: {str(e)}"
         add_log("error", error_msg)
         st.error(error_msg)
         st.error("请检查配置文件是否正确，或联系管理员")
+
+def render_main_content(config, templates):
+    """渲染主要内容区域"""
+    if st.session_state.current_section == 'admin':
+        show_admin_panel()
+    elif st.session_state.current_section == 'db_admin':
+        show_db_admin()
+    elif st.session_state.current_section == 'chat_test':
+        api_client = APIClient(config)
+        show_chat_interface(api_client)
+    elif st.session_state.current_section == 'history':
+        show_user_history()
+    elif st.session_state.current_section == 'bill':
+        show_bill_detail()
+    elif st.session_state.current_section == 'all_in_one':
+        api_client = APIClient(config)
+        all_in_one_generator = AllInOneGenerator(api_client)
+        all_in_one_generator.render()
+    elif st.session_state.current_section == 'pr':
+        api_client = APIClient(config)
+        pr_generator = PRGenerator(api_client)
+        pr_generator.render()
+    elif st.session_state.current_section == 'faq':
+        api_client = APIClient(config)
+        faq_generator = FAQGenerator(api_client)
+        faq_generator.generate_customer_faq()
+    elif st.session_state.current_section == 'internal_faq':
+        api_client = APIClient(config)
+        faq_generator = InternalFAQGenerator(api_client)
+        faq_generator.generate_internal_faq()
+    elif st.session_state.current_section == 'mlp':
+        api_client = APIClient(config)
+        mlp_generator = MLPGenerator(api_client)
+        mlp_generator.generate_mlp()
+    elif st.session_state.current_section == 'aar':
+        api_client = APIClient(config)
+        aar_generator = AARGenerator(api_client)
+        aar_generator.render()
+    else:
+        st.info(f"{templates['sections'][st.session_state.current_section]['title']}能正在开发中...")
 
 if __name__ == "__main__":
     main()
