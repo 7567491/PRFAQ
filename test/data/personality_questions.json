@@ -1,0 +1,552 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "situation",
+      "question": "团队需要完成一个创新项目时，你会：",
+      "options": {
+        "A": {
+          "text": "召集头脑风暴，鼓励团队大胆提出想法",
+          "dimensions": {
+            "mbti": ["E", "N"],
+            "big5": ["O", "E"],
+            "holland": ["A", "S"]
+          }
+        },
+        "B": {
+          "text": "独自研究分析相关领域的前沿发展",
+          "dimensions": {
+            "mbti": ["I", "T"],
+            "big5": ["O", "C"],
+            "holland": ["I", "R"]
+          }
+        },
+        "C": {
+          "text": "建立严格的创新管理流程和评估体系",
+          "dimensions": {
+            "mbti": ["J", "S"],
+            "big5": ["C", "N"],
+            "holland": ["C", "R"]
+          }
+        },
+        "D": {
+          "text": "与团队成员一对一深入交流想法",
+          "dimensions": {
+            "mbti": ["I", "F"],
+            "big5": ["A", "E"],
+            "holland": ["S", "I"]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "situation",
+      "question": "发现团队成员间出现冲突时，你会：",
+      "options": {
+        "A": {
+          "text": "立即召开会议，让大家当面沟通",
+          "dimensions": {
+            "mbti": ["E", "F"],
+            "big5": ["E", "A"],
+            "holland": ["S", "E"]
+          }
+        },
+        "B": {
+          "text": "私下了解各方观点后制定解决方案",
+          "dimensions": {
+            "mbti": ["I", "T"],
+            "big5": ["C", "N"],
+            "holland": ["I", "C"]
+          }
+        },
+        "C": {
+          "text": "参考以往类似情况的处理经验",
+          "dimensions": {
+            "mbti": ["S", "J"],
+            "big5": ["C", "A"],
+            "holland": ["C", "R"]
+          }
+        },
+        "D": {
+          "text": "创造性地设计新的团队协作机制",
+          "dimensions": {
+            "mbti": ["N", "P"],
+            "big5": ["O", "E"],
+            "holland": ["A", "E"]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "situation",
+      "question": "需要做重要决策时，你倾向于：",
+      "options": {
+        "A": {
+          "text": "收集详尽数据进行理性分析",
+          "dimensions": {
+            "mbti": ["T", "J"],
+            "big5": ["C", "N"],
+            "holland": ["I", "R"]
+          }
+        },
+        "B": {
+          "text": "考虑决策对团队情绪的影响",
+          "dimensions": {
+            "mbti": ["F", "S"],
+            "big5": ["A", "E"],
+            "holland": ["S", "A"]
+          }
+        },
+        "C": {
+          "text": "寻找创新突破性的解决方案",
+          "dimensions": {
+            "mbti": ["N", "P"],
+            "big5": ["O", "E"],
+            "holland": ["A", "E"]
+          }
+        },
+        "D": {
+          "text": "遵循既定流程和标准执行",
+          "dimensions": {
+            "mbti": ["S", "J"],
+            "big5": ["C", "N"],
+            "holland": ["C", "R"]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "situation",
+      "question": "面对项目中的突发问题，你会：",
+      "options": {
+        "A": {
+          "text": "迅速组织团队讨论应对方案",
+          "dimensions": {
+            "mbti": ["E", "P"],
+            "big5": ["E", "O"],
+            "holland": ["S", "E"]
+          }
+        },
+        "B": {
+          "text": "独立分析原因并制定解决方案",
+          "dimensions": {
+            "mbti": ["I", "T"],
+            "big5": ["C", "N"],
+            "holland": ["I", "R"]
+          }
+        },
+        "C": {
+          "text": "按既定应急预案有序处理",
+          "dimensions": {
+            "mbti": ["S", "J"],
+            "big5": ["C", "N"],
+            "holland": ["C", "R"]
+          }
+        },
+        "D": {
+          "text": "尝试创新方法突破困境",
+          "dimensions": {
+            "mbti": ["N", "P"],
+            "big5": ["O", "E"],
+            "holland": ["A", "E"]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "situation",
+      "question": "在进行工作汇报时，你习惯：",
+      "options": {
+        "A": {
+          "text": "重点展示数据和逻辑分析",
+          "dimensions": {
+            "mbti": ["T", "J"],
+            "big5": ["C", "N"],
+            "holland": ["I", "R"]
+          }
+        },
+        "B": {
+          "text": "强调团队协作和成员贡献",
+          "dimensions": {
+            "mbti": ["F", "E"],
+            "big5": ["A", "E"],
+            "holland": ["S", "E"]
+          }
+        },
+        "C": {
+          "text": "突出创新想法和未来展望",
+          "dimensions": {
+            "mbti": ["N", "P"],
+            "big5": ["O", "E"],
+            "holland": ["A", "I"]
+          }
+        },
+        "D": {
+          "text": "详细说明执行过程和规范",
+          "dimensions": {
+            "mbti": ["S", "J"],
+            "big5": ["C", "N"],
+            "holland": ["C", "R"]
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "situation",
+      "question": "带领新团队时，你最注重：",
+      "options": {
+        "A": {
+          "text": "建立清晰的目标和规范制度",
+          "dimensions": {
+            "mbti": ["J", "T"],
+            "big5": ["C", "N"],
+            "holland": ["C", "R"]
+          }
+        },
+        "B": {
+          "text": "营造融洽的团队氛围",
+          "dimensions": {
+            "mbti": ["F", "E"],
+            "big5": ["A", "E"],
+            "holland": ["S", "E"]
+          }
+        },
+        "C": {
+          "text": "鼓励创新和个性发展",
+          "dimensions": {
+            "mbti": ["N", "P"],
+            "big5": ["O", "E"],
+            "holland": ["A", "I"]
+          }
+        },
+        "D": {
+          "text": "确保工作效率和执行力",
+          "dimensions": {
+            "mbti": ["S", "J"],
+            "big5": ["C", "N"],
+            "holland": ["R", "C"]
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "situation",
+      "question": "在制定长期发展规划时，你会：",
+      "options": {
+        "A": {
+          "text": "注重数据分析和市场研究",
+          "dimensions": {
+            "mbti": ["T", "J"],
+            "big5": ["C", "N"],
+            "holland": ["I", "R"]
+          }
+        },
+        "B": {
+          "text": "重视团队共识和参与度",
+          "dimensions": {
+            "mbti": ["F", "E"],
+            "big5": ["A", "E"],
+            "holland": ["S", "E"]
+          }
+        },
+        "C": {
+          "text": "关注创新机会和发展潜力",
+          "dimensions": {
+            "mbti": ["N", "P"],
+            "big5": ["O", "E"],
+            "holland": ["A", "E"]
+          }
+        },
+        "D": {
+          "text": "强调可执行性和稳定性",
+          "dimensions": {
+            "mbti": ["S", "J"],
+            "big5": ["C", "N"],
+            "holland": ["C", "R"]
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "situation",
+      "question": "遇到团队成员工作失误时，你会：",
+      "options": {
+        "A": {
+          "text": "立即指出问题要求改正",
+          "dimensions": {
+            "mbti": ["T", "J"],
+            "big5": ["C", "N"],
+            "holland": ["R", "C"]
+          }
+        },
+        "B": {
+          "text": "耐心指导帮助改进",
+          "dimensions": {
+            "mbti": ["F", "E"],
+            "big5": ["A", "E"],
+            "holland": ["S", "A"]
+          }
+        },
+        "C": {
+          "text": "分析原因优化流程",
+          "dimensions": {
+            "mbti": ["T", "J"],
+            "big5": ["C", "N"],
+            "holland": ["I", "C"]
+          }
+        },
+        "D": {
+          "text": "鼓励尝试新的解决方法",
+          "dimensions": {
+            "mbti": ["N", "P"],
+            "big5": ["O", "E"],
+            "holland": ["A", "E"]
+          }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "situation",
+      "question": "在跨部门协作项目中，你倾向于：",
+      "options": {
+        "A": {
+          "text": "制定详细的协作流程和规范",
+          "dimensions": {
+            "mbti": ["J", "T"],
+            "big5": ["C", "N"],
+            "holland": ["C", "R"]
+          }
+        },
+        "B": {
+          "text": "通过非正式沟通建立关系",
+          "dimensions": {
+            "mbti": ["F", "E"],
+            "big5": ["A", "E"],
+            "holland": ["S", "E"]
+          }
+        },
+        "C": {
+          "text": "寻找创新的协作模式",
+          "dimensions": {
+            "mbti": ["N", "P"],
+            "big5": ["O", "E"],
+            "holland": ["A", "E"]
+          }
+        },
+        "D": {
+          "text": "确保信息传递准确及时",
+          "dimensions": {
+            "mbti": ["S", "J"],
+            "big5": ["C", "N"],
+            "holland": ["R", "C"]
+          }
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "scale",
+      "question": "我习惯在行动前做充分的调研和分析",
+      "dimensions": {
+        "mbti": ["T", "J"],
+        "big5": ["C"],
+        "holland": ["I", "R"]
+      }
+    },
+    {
+      "id": 11,
+      "type": "scale",
+      "question": "我善于调动团队氛围，让大家保持积极性",
+      "dimensions": {
+        "mbti": ["E", "F"],
+        "big5": ["E", "A"],
+        "holland": ["S", "E"]
+      }
+    },
+    {
+      "id": 12,
+      "type": "scale",
+      "question": "我经常提出创新想法，愿意尝试新方法",
+      "dimensions": {
+        "mbti": ["N", "P"],
+        "big5": ["O"],
+        "holland": ["A", "I"]
+      }
+    },
+    {
+      "id": 13,
+      "type": "scale",
+      "question": "我注重按规范流程办事，确保工作质量",
+      "dimensions": {
+        "mbti": ["S", "J"],
+        "big5": ["C"],
+        "holland": ["C", "R"]
+      }
+    },
+    {
+      "id": 14,
+      "type": "scale",
+      "question": "我倾向于通过一对一深入交流解决问题",
+      "dimensions": {
+        "mbti": ["I", "F"],
+        "big5": ["A"],
+        "holland": ["S", "I"]
+      }
+    },
+    {
+      "id": 15,
+      "type": "scale",
+      "question": "我喜欢挑战自我，主动承担有难度的任务",
+      "dimensions": {
+        "mbti": ["E", "N"],
+        "big5": ["O", "E"],
+        "holland": ["E", "A"]
+      }
+    },
+    {
+      "id": 16,
+      "type": "scale",
+      "question": "我善于统筹规划，确保项目有序推进",
+      "dimensions": {
+        "mbti": ["J", "T"],
+        "big5": ["C"],
+        "holland": ["C", "R"]
+      }
+    },
+    {
+      "id": 17,
+      "type": "scale",
+      "question": "我重视团队和谐，愿意照顾他人感受",
+      "dimensions": {
+        "mbti": ["F", "E"],
+        "big5": ["A"],
+        "holland": ["S"]
+      }
+    },
+    {
+      "id": 18,
+      "type": "rank",
+      "question": "在工作中，你最看重：",
+      "options": {
+        "A": {
+          "text": "工作的创新性和挑战性",
+          "dimensions": {
+            "mbti": ["N", "P"],
+            "big5": ["O"],
+            "holland": ["A", "I"]
+          }
+        },
+        "B": {
+          "text": "团队氛围和人际关系",
+          "dimensions": {
+            "mbti": ["F", "E"],
+            "big5": ["A", "E"],
+            "holland": ["S"]
+          }
+        },
+        "C": {
+          "text": "规范性和可控性",
+          "dimensions": {
+            "mbti": ["S", "J"],
+            "big5": ["C"],
+            "holland": ["C", "R"]
+          }
+        },
+        "D": {
+          "text": "逻辑性和专业性",
+          "dimensions": {
+            "mbti": ["T", "I"],
+            "big5": ["C"],
+            "holland": ["I", "R"]
+          }
+        }
+      }
+    },
+    {
+      "id": 19,
+      "type": "rank",
+      "question": "在选择工作环境时，你最重视：",
+      "options": {
+        "A": {
+          "text": "自由开放的创新环境",
+          "dimensions": {
+            "mbti": ["N", "P"],
+            "big5": ["O"],
+            "holland": ["A"]
+          }
+        },
+        "B": {
+          "text": "温暖友善的团队氛围",
+          "dimensions": {
+            "mbti": ["F", "E"],
+            "big5": ["A"],
+            "holland": ["S"]
+          }
+        },
+        "C": {
+          "text": "规范有序的管理制度",
+          "dimensions": {
+            "mbti": ["S", "J"],
+            "big5": ["C"],
+            "holland": ["C"]
+          }
+        },
+        "D": {
+          "text": "专业深入的发展空间",
+          "dimensions": {
+            "mbti": ["T", "I"],
+            "big5": ["O"],
+            "holland": ["I"]
+          }
+        }
+      }
+    },
+    {
+      "id": 20,
+      "type": "rank",
+      "question": "在职业发展中，你最追求：",
+      "options": {
+        "A": {
+          "text": "创新突破的成就感",
+          "dimensions": {
+            "mbti": ["N", "P"],
+            "big5": ["O"],
+            "holland": ["A", "E"]
+          }
+        },
+        "B": {
+          "text": "良好的人际网络",
+          "dimensions": {
+            "mbti": ["E", "F"],
+            "big5": ["E"],
+            "holland": ["S"]
+          }
+        },
+        "C": {
+          "text": "稳定可预期的晋升",
+          "dimensions": {
+            "mbti": ["S", "J"],
+            "big5": ["C"],
+            "holland": ["C"]
+          }
+        },
+        "D": {
+          "text": "专业能力的提升",
+          "dimensions": {
+            "mbti": ["T", "I"],
+            "big5": ["C"],
+            "holland": ["I"]
+          }
+        }
+      }
+    }
+  ]
+} 
