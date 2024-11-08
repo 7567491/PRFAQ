@@ -196,7 +196,7 @@ def main():
             if st.button("🚪 退出登录", use_container_width=True):
                 handle_logout()
         
-        # 根据用户���色决定布局
+        # 根据用户色决定布局
         if st.session_state.user_role == 'admin':
             # 管理员显示日志，使用 5:1 的布局
             main_col, log_col = st.columns([5, 1])
@@ -302,9 +302,22 @@ def render_main_content(config, templates):
             career_test = CareerTest()
             add_log("info", "成功初始化CareerTest实例")
             
-            # 渲染测试界面
-            career_test.render()
-            add_log("info", "成功渲染职业测试界面")
+            # 渲染测试界面并获取结果
+            result = career_test.render()
+            
+            # 如果测试完成并有结果，保存到历史记录
+            if result and 'final_result' in st.session_state:
+                try:
+                    from modules.utils import save_history
+                    # 只保存最终显示的结果文本
+                    save_history(
+                        st.session_state.user,
+                        'career_test',
+                        st.session_state.final_result  # 最终显示的结果文本
+                    )
+                    add_log("info", "职业测评结果已保存到历史记录")
+                except Exception as e:
+                    add_log("error", f"保存职业测评结果失败: {str(e)}")
             
         except ImportError as e:
             error_msg = f"导入模块失败: {str(e)}\n"

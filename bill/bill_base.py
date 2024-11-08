@@ -1,13 +1,34 @@
 import sqlite3
 from datetime import datetime
+import pytz
 import pandas as pd
 from user.user_base import UserManager
 from user.logger import add_log
+
+# 定义时区
+TIMEZONE = pytz.timezone('Asia/Shanghai')
 
 class BillManager:
     def __init__(self):
         self.user_mgr = UserManager()
         self.COST_PER_CHAR = 0.0001  # 每字符0.0001元人民币
+    
+    def get_current_time(self) -> str:
+        """获取当前东八区时间"""
+        return datetime.now(TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
+    
+    def safe_execute(self, conn, query, params=None):
+        """安全执行SQL查询"""
+        try:
+            c = conn.cursor()
+            if params:
+                c.execute(query, params)
+            else:
+                c.execute(query)
+            return c
+        except sqlite3.Error as e:
+            add_log("error", f"数据库执行错误: {str(e)}\nQuery: {query}\nParams: {params}")
+            raise
     
     def get_user_points(self, user_id: str) -> int:
         """获取用户当前积分"""
@@ -22,99 +43,105 @@ class BillManager:
     
     def add_points(self, user_id: str, amount: int, type: str, description: str) -> bool:
         """添加积分"""
-        if amount <= 0:
+        if not isinstance(amount, int) or amount <= 0:
+            add_log("error", f"无效的积分数量: {amount}")
             return False
             
-        conn = self.user_mgr.get_db_connection()
-        c = conn.cursor()
-        
+        conn = None
         try:
-            # 获取当前积分
+            conn = self.user_mgr.get_db_connection()
             current_points = self.get_user_points(user_id)
             
             # 更新用户积分
-            c.execute('''
-                UPDATE users 
-                SET points = points + ? 
-                WHERE user_id = ?
-            ''', (amount, user_id))
+            self.safe_execute(
+                conn,
+                'UPDATE users SET points = points + ? WHERE user_id = ?',
+                (amount, user_id)
+            )
             
             # 记录交易
-            c.execute('''
-                INSERT INTO point_transactions (
+            self.safe_execute(
+                conn,
+                '''INSERT INTO point_transactions (
                     user_id, timestamp, type, amount, balance,
                     description, operation_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                user_id,
-                datetime.now().isoformat(),
-                type,
-                amount,
-                current_points + amount,
-                description,
-                None
-            ))
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                (
+                    user_id,
+                    self.get_current_time(),
+                    type,
+                    amount,
+                    current_points + amount,
+                    description,
+                    None
+                )
+            )
             
             conn.commit()
             add_log("info", f"用户 {user_id} 增加 {amount} 积分")
             return True
             
         except Exception as e:
-            conn.rollback()
+            if conn:
+                conn.rollback()
             add_log("error", f"添加积分失败: {str(e)}")
             return False
         finally:
-            conn.close()
+            if conn:
+                conn.close()
     
     def deduct_points(self, user_id: str, amount: int, type: str, description: str) -> bool:
         """扣除积分"""
-        if amount <= 0:
+        if not isinstance(amount, int) or amount <= 0:
+            add_log("error", f"无效的扣除积分数量: {amount}")
             return False
             
-        conn = self.user_mgr.get_db_connection()
-        c = conn.cursor()
-        
+        conn = None
         try:
-            # 获取当前积分
+            conn = self.user_mgr.get_db_connection()
             current_points = self.get_user_points(user_id)
             
-            # 检查积分是否足够
             if current_points < amount:
+                add_log("warning", f"用户 {user_id} 积分不足: 当前{current_points}, 需要{amount}")
                 return False
             
             # 更新用户积分
-            c.execute('''
-                UPDATE users 
-                SET points = points - ? 
-                WHERE user_id = ?
-            ''', (amount, user_id))
+            self.safe_execute(
+                conn,
+                'UPDATE users SET points = points - ? WHERE user_id = ?',
+                (amount, user_id)
+            )
             
             # 记录交易
-            c.execute('''
-                INSERT INTO point_transactions (
+            self.safe_execute(
+                conn,
+                '''INSERT INTO point_transactions (
                     user_id, timestamp, type, amount, balance,
                     description, operation_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                user_id,
-                datetime.now().isoformat(),
-                type,
-                -amount,
-                current_points - amount,
-                description,
-                None
-            ))
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                (
+                    user_id,
+                    self.get_current_time(),
+                    type,
+                    -amount,
+                    current_points - amount,
+                    description,
+                    None
+                )
+            )
             
             conn.commit()
             add_log("info", f"用户 {user_id} 扣除 {amount} 积分")
             return True
             
         except Exception as e:
-            conn.rollback()
+            if conn:
+                conn.rollback()
             add_log("error", f"扣除积分失败: {str(e)}")
             return False
         finally:
-            conn.close()
+            if conn:
+                conn.close()
     
     def get_user_total_usage(self, user_id: str) -> dict:
         """获取用户的总使用量统计"""
@@ -242,7 +269,7 @@ class BillManager:
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 user_id,
-                datetime.now().isoformat(),
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 api_name,
                 operation,
                 input_letters,
@@ -275,7 +302,7 @@ class BillManager:
             ) VALUES (?, ?, ?, ?, ?, ?, ?)
             ''', (
                 user_id,
-                datetime.now().isoformat(),
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 'consume',
                 -points_cost,
                 current_points - points_cost,

@@ -39,8 +39,6 @@ class CareerTest:
         """保存测试结果到历史记录"""
         try:
             print("\n=== 开始保存测试结果 ===")
-            print(f"原始结果数据类型: {type(results)}")
-            print(f"原始结果内容: {json.dumps(results, ensure_ascii=False, indent=2)}")
             
             # 生成完整的测评报告
             report = generate_report(results)
@@ -49,30 +47,28 @@ class CareerTest:
                 print(error_msg)
                 st.error(error_msg)
                 return False
-                
-            print("\n=== 测评报告生成成功 ===")
-            print(f"报告内容: {json.dumps(report, ensure_ascii=False, indent=2)}")
+            
+            # 生成最终显示的文本结果
+            final_text = (
+                f"# 职业测评结果报告\n\n"
+                f"## 个性类型\n"
+                f"MBTI类型：{results.get('mbti_type', 'N/A')}\n"
+                f"主要职业倾向：{report['personality_traits']['holland']['primary']['title']}\n\n"
+                f"## 人格特征分析\n" + 
+                "\n".join([f"- {k}: {v['interpretation']}" 
+                          for k, v in report['personality_traits']['big5'].items()]) +
+                f"\n\n## 推荐职业方向\n" +
+                "\n".join([f"- {s['title']}\n  {s['positions'][0]['name']}" 
+                          for s in report['career_suggestions']]) +
+                f"\n\n## 发展建议\n"
+                f"### 短期发展重点\n{report['development_suggestions']['short_term']['improvements']}\n\n"
+                f"### 长期发展方向\n{report['development_suggestions']['long_term']['career_path']}"
+            )
             
             try:
-                # 准备输出文本
-                output_text = (
-                    f"MBTI类型：{results.get('mbti_type', 'N/A')}\n"
-                    f"主要职业倾向：{report['personality_traits']['holland']['primary']['title']}\n\n"
-                    f"大五人格特征：\n" + 
-                    "\n".join([f"- {k}: {v['interpretation']}" 
-                              for k, v in report['personality_traits']['big5'].items()]) +
-                    f"\n\n推荐职业方向：\n" +
-                    "\n".join([f"- {s['title']}" for s in report['career_suggestions']])
-                )
-                
                 # 计算字符数
-                input_text = "职业测评"
-                input_chars = len(input_text)
-                output_chars = len(output_text)
-                
-                print(f"\n=== 字符统计 ===")
-                print(f"输入字符数: {input_chars}")
-                print(f"输出字符数: {output_chars}")
+                input_chars = len("职业测评")
+                output_chars = len(final_text)
                 
                 # 添加字符使用记录
                 if not add_letters_record(
@@ -81,70 +77,32 @@ class CareerTest:
                     api_name="career_test",
                     operation="职业测评"
                 ):
-                    error_msg = "添加字符使用记录失败"
-                    print(error_msg)
-                    st.error(error_msg)
+                    print("添加字符使用记录失败")
                     return False
                 
-                # 准备历史记录数据
-                try:
-                    # 将结果转换为JSON字符串
-                    results_json = json.dumps(results, ensure_ascii=False)
-                    
-                    # 准备完整的content内容
-                    content = {
-                        'input': input_text,
-                        'output': output_text,
-                        'test_results': results_json
-                    }
-                    
-                    # 准备历史记录数据
-                    history_data = {
-                        'user_id': st.session_state.user,
-                        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        'type': 'career_test',
-                        'content': json.dumps(content, ensure_ascii=False)  # 序列化content
-                    }
-                    
-                    print("\n=== 历史记录数据 ===")
-                    print(json.dumps(history_data, ensure_ascii=False, indent=2))
-                    
-                    # 保存历史记录
-                    save_history(history_data)
-                    print("\n=== 历史记录保存成功 ===")
-                    return True
-                    
-                except json.JSONDecodeError as e:
-                    error_msg = f"JSON序列化失败: {str(e)}"
-                    print(error_msg)
-                    st.error(error_msg)
-                    return False
-                    
-                except Exception as e:
-                    error_msg = (
-                        f"\n=== 保存历史记录失败 ===\n"
-                        f"错误类型: {type(e).__name__}\n"
-                        f"错误信息: {str(e)}\n"
-                        f"错误位置: {traceback.format_exc()}"
-                    )
-                    print(error_msg)
-                    st.error(error_msg)
-                    return False
-                    
-            except Exception as e:
-                error_msg = (
-                    f"\n=== 准备数据失败 ===\n"
-                    f"错误类型: {type(e).__name__}\n"
-                    f"错误信息: {str(e)}\n"
-                    f"错误位置: {traceback.format_exc()}"
+                # 保存历史记录
+                from modules.utils import save_history
+                save_history(
+                    st.session_state.user,
+                    'career_test',
+                    final_text  # 直接保存最终文本结果
                 )
+                
+                # 保存到 session_state 供显示使用
+                st.session_state.final_result = final_text
+                
+                print("=== 测评结果保存成功 ===")
+                return True
+                
+            except Exception as e:
+                error_msg = f"保存结果失败: {str(e)}"
                 print(error_msg)
                 st.error(error_msg)
                 return False
                 
         except Exception as e:
             error_msg = (
-                f"\n=== 保存测试结果时发生未预期的错误 ===\n"
+                f"\n=== 保存测试结果时发生错误 ===\n"
                 f"错误类型: {type(e).__name__}\n"
                 f"错误信息: {str(e)}\n"
                 f"错误位置: {traceback.format_exc()}"
@@ -462,7 +420,7 @@ class CareerTest:
         st.subheader("领导力则得分")
         scores_df = pd.DataFrame([
             {
-                '准则': name,
+                '则': name,
                 '得分': data['score']
             }
             for name, data in report['leadership_analysis']['sorted_scores']
@@ -625,3 +583,11 @@ class CareerTest:
             print(error_msg)
             st.error(f"加载数据文件失败: {str(e)}")
             return None, None
+
+    def display_final_result(self, result_text):
+        """显示最终结果"""
+        st.markdown("## 职业测评结果")
+        st.markdown(result_text)
+        
+        # 保存最终结果到 session_state
+        st.session_state.final_result = result_text
