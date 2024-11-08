@@ -146,10 +146,10 @@ def main():
                 st.session_state.current_section = 'career_test'
                 add_log("info", "进入职业测试")
 
-            if st.button("📰 虚拟新闻稿", use_container_width=True):
+            if st.button("📰 逆向工作法", use_container_width=True):
                 clear_main_content()
                 st.session_state.current_section = 'pr'
-                add_log("info", "切换到虚拟新闻稿模式")
+                add_log("info", "切换到逆向工作法模式")
             
             if st.button("📊 复盘六步法", use_container_width=True):
                 clear_main_content()
@@ -196,7 +196,7 @@ def main():
             if st.button("🚪 退出登录", use_container_width=True):
                 handle_logout()
         
-        # 根据用户角色决定布局
+        # 根据用户���色决定布局
         if st.session_state.user_role == 'admin':
             # 管理员显示日志，使用 5:1 的布局
             main_col, log_col = st.columns([5, 1])
@@ -240,6 +240,9 @@ def render_main_content(config, templates):
         all_in_one_generator = AllInOneGenerator(api_client)
         all_in_one_generator.render()
     elif st.session_state.current_section == 'pr':
+        st.markdown("""
+        逆向工作法是一种从结果反推过程的创新思维方法。通过先设想理想的最终成果，再逐步分析实现这个结果所需的步骤和条件，帮助我们更清晰地规划项目路径。本模块将帮助您运用这种方法，通过编写未来新闻稿的形式，明确项目目标和关键成功要素。您只需要输入产品的核心理念，系统就会协助您生成完整的项目愿景说明，包括目标受众、价值主张、功能特性等关键内容。
+        """)
         api_client = APIClient(config)
         pr_generator = PRGenerator(api_client)
         pr_generator.render()
@@ -256,6 +259,9 @@ def render_main_content(config, templates):
         mlp_generator = MLPGenerator(api_client)
         mlp_generator.generate_mlp()
     elif st.session_state.current_section == 'aar':
+        st.markdown("""
+        复盘六步法源于军事领域的"事后复盘"（After Action Review），后被广泛应用于企业管理实践中。它通过六个系统化步骤：设定复盘目标、回顾行动过程、对比预期结果、分析差距原因、总结经验教训、形成复盘文档，帮助团队从实践中提炼经验，持续改进。本模块将引导您完整地执行这六个步骤，通过AI辅助分析，帮助您更深入地思考项目经验，形成可复用的经验总结文档。
+        """)
         api_client = APIClient(config)
         aar_generator = AARGenerator(api_client)
         aar_generator.render()
