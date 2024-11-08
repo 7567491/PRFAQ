@@ -1,166 +1,8 @@
 import streamlit as st
-import sqlite3
-import hashlib
 from datetime import datetime
-from typing import Optional, Dict, Any
+from user.user_base import UserManager
 from user.logger import add_log
-import os
-from db.db_upgrade import upgrade_database
-
-class UserManager:
-    def __init__(self):
-        self.db_path = 'db/users.db'
-    
-    def get_db_connection(self):
-        """获取数据库连接"""
-        try:
-            # 使用绝对路径
-            db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'db', 'users.db')
-            conn = sqlite3.connect(db_path)
-            
-            # 检查是否需要升级数据库
-            try:
-                # 尝试访问 points 列，如果不存在会抛出异常
-                c = conn.cursor()
-                c.execute("SELECT points FROM users LIMIT 1")
-            except sqlite3.OperationalError:
-                # 如果 points 列不存在，执行数据库升级
-                conn.close()  # 先关闭当前连接
-                upgrade_database()  # 执行升级
-                conn = sqlite3.connect(db_path)  # 重新连接
-            
-            return conn
-        except Exception as e:
-            print(f"数据库连接失败: {str(e)}")
-            raise
-    
-    def hash_password(self, password: str) -> str:
-        """密码加密"""
-        return hashlib.sha256(password.encode()).hexdigest()
-    
-    def verify_user(self, username: str, password: str) -> bool:
-        """验证用户登录"""
-        conn = self.get_db_connection()
-        c = conn.cursor()
-        
-        try:
-            hashed_input = self.hash_password(password)
-            # 同时检查用户是否活跃
-            c.execute('''
-                SELECT username, password, is_active 
-                FROM users 
-                WHERE username = ?
-            ''', (username,))
-            result = c.fetchone()
-            
-            if result and result[1] == hashed_input:
-                if result[2] == 1:  # 检查是否活跃
-                    return True
-                else:
-                    print("账户已被禁用")
-                    return False
-            return False
-        finally:
-            conn.close()
-    
-    def get_user_info(self, username: str) -> Optional[Dict[str, Any]]:
-        """获取用户信息"""
-        conn = self.get_db_connection()
-        c = conn.cursor()
-        
-        try:
-            c.execute('''
-                SELECT user_id, username, email, phone, org_name, role, is_active,
-                       created_at, last_login, total_chars, total_cost,
-                       daily_chars_limit, used_chars_today, points
-                FROM users WHERE username = ?
-            ''', (username,))
-            
-            result = c.fetchone()
-            
-            if result:
-                return {
-                    'user_id': result[0],
-                    'username': result[1],
-                    'email': result[2],
-                    'phone': result[3],
-                    'org_name': result[4],
-                    'role': result[5],
-                    'is_active': bool(result[6]),
-                    'created_at': result[7],
-                    'last_login': result[8],
-                    'total_chars': result[9],
-                    'total_cost': result[10],
-                    'daily_chars_limit': result[11],
-                    'used_chars_today': result[12],
-                    'points': result[13]
-                }
-        except sqlite3.Error as e:
-            add_log("error", f"获取用户信息失败: {str(e)}")
-        finally:
-            conn.close()
-        
-        return None
-
-    def update_last_login(self, username: str):
-        """更新最后登录时间"""
-        conn = self.get_db_connection()
-        c = conn.cursor()
-        
-        try:
-            c.execute('''
-                UPDATE users 
-                SET last_login = ? 
-                WHERE username = ?
-            ''', (datetime.now().isoformat(), username))
-            
-            conn.commit()
-        except sqlite3.Error as e:
-            add_log("error", f"更新最后登录时间失败: {str(e)}")
-        finally:
-            conn.close()
-
-    def update_usage_stats(self, username: str, chars: int = 0, cost: float = 0.0):
-        """更新用户使用统计"""
-        conn = self.get_db_connection()
-        c = conn.cursor()
-        
-        try:
-            c.execute('''
-                UPDATE users 
-                SET total_chars = total_chars + ?,
-                    total_cost = total_cost + ?,
-                    used_chars_today = used_chars_today + ?
-                WHERE username = ?
-            ''', (chars, cost, chars, username))
-            
-            conn.commit()
-        except sqlite3.Error as e:
-            add_log("error", f"更新使用统计失败: {str(e)}")
-        finally:
-            conn.close()
-
-    def check_daily_limit(self, username: str) -> bool:
-        """检查用户是否达到每日字符使用限制"""
-        conn = self.get_db_connection()
-        c = conn.cursor()
-        
-        try:
-            c.execute('''
-                SELECT daily_chars_limit, used_chars_today 
-                FROM users WHERE username = ?
-            ''', (username,))
-            
-            result = c.fetchone()
-            if result:
-                daily_limit, used_today = result
-                return used_today < daily_limit
-        except sqlite3.Error as e:
-            add_log("error", f"检查每日限制失败: {str(e)}")
-        finally:
-            conn.close()
-        
-        return False
+from user.user_add import UserRegistration
 
 def init_session_state():
     """初始化session state中的用户相关变量"""
@@ -170,27 +12,58 @@ def init_session_state():
         st.session_state.user = None
     if 'user_role' not in st.session_state:
         st.session_state.user_role = None
+    
+    # 从 query params 获取保存的登录信息
+    try:
+        if 'saved_username' in st.query_params and 'saved_password' in st.query_params:
+            st.session_state.saved_username = st.query_params['saved_username']
+            st.session_state.saved_password = st.query_params['saved_password']
+    except:
+        pass
+
+def save_login_info(username: str, password: str):
+    """保存登录信息到 query params"""
+    try:
+        st.query_params['saved_username'] = username
+        st.query_params['saved_password'] = password
+    except:
+        pass
+
+def clear_login_info():
+    """清除保存的登录信息"""
+    try:
+        st.query_params.clear()
+    except:
+        pass
 
 def show_login_page():
     """显示登录页面"""
     st.title("PRFAQ Pro 登录")
     
-    user_mgr = UserManager()
+    # 如果是注册状态，显示注册表单
+    if st.session_state.get('show_registration', False):
+        from user.user_add import show_registration_form
+        show_registration_form()
+        return
     
+    user_mgr = UserManager()
+    registration = UserRegistration()
+    
+    # 获取默认的用户名和密码
+    default_username = ""
+    default_password = ""
+    
+    # 检查是否有新注册用户信息
+    new_user = st.session_state.get('new_registered_user')
+    if new_user:
+        default_username = new_user['username']
+        default_password = new_user['password']
+        # 清除注册信息
+        del st.session_state.new_registered_user
     # 检查是否有保存的登录信息
-    if 'saved_username' in st.session_state and 'saved_password' in st.session_state:
-        username = st.session_state.saved_username
-        password = st.session_state.saved_password
-        if user_mgr.verify_user(username, password):
-            # 自动登录
-            user_info = user_mgr.get_user_info(username)
-            if user_info:
-                st.session_state.user = username
-                st.session_state.authenticated = True
-                st.session_state.user_role = user_info['role']
-                add_log("info", f"用户 {username} 自动登录成功")
-                st.rerun()
-                return
+    elif 'saved_username' in st.session_state and 'saved_password' in st.session_state:
+        default_username = st.session_state.saved_username
+        default_password = st.session_state.saved_password
     
     with st.form("login_form", clear_on_submit=False):
         st.markdown("""
@@ -201,16 +74,24 @@ def show_login_page():
         """, unsafe_allow_html=True)
         
         username = st.text_input("用户名", 
-                               value="Rose",  # 设置默认用户名
+                               value=default_username,
                                key="username_input", 
-                               autocomplete="username")
+                               autocomplete="username",
+                               placeholder="请输入用户名")
         password = st.text_input("密码", 
-                               value="Amazon123",  # 设置默认密码
+                               value=default_password,
                                type="password", 
                                key="password_input", 
-                               autocomplete="current-password")
+                               autocomplete="current-password",
+                               placeholder="请输入密码")
         remember = st.checkbox("记住登录状态", value=True)
-        submitted = st.form_submit_button("登录")
+        
+        # 创建两列布局放置按钮
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            submitted = st.form_submit_button("录", use_container_width=True)
+        with col2:
+            register = st.form_submit_button("👉 新用户注册", use_container_width=True)
         
         if submitted:
             if username and password:
@@ -226,8 +107,14 @@ def show_login_page():
                         st.session_state.user_role = user_info['role']
                         
                         if remember:
-                            st.session_state.saved_username = username
-                            st.session_state.saved_password = password
+                            # 保存登录信息
+                            save_login_info(username, password)
+                        else:
+                            # 清除登录信息
+                            clear_login_info()
+                        
+                        # 处理每日登录奖励
+                        registration.award_daily_login(user_info['user_id'], username)
                         
                         user_mgr.update_last_login(username)
                         add_log("info", f"用户 {username} 登录成功")
@@ -238,11 +125,17 @@ def show_login_page():
                     st.error("用户名或密码错误")
             else:
                 st.error("请输入用户名和密码")
+        
+        if register:
+            st.session_state.show_registration = True
+            st.rerun()
 
 def handle_logout():
     """处理用户退出登录"""
     if st.session_state.user:
         add_log("info", f"用户 {st.session_state.user} 退出登录")
+    # 清除登录信息
+    clear_login_info()
     st.session_state.clear()
     st.rerun()
 
