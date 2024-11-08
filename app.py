@@ -82,7 +82,7 @@ def main():
         # 设置页面配置
         try:
             st.set_page_config(
-                page_title=templates.get("page_title", "PRFAQ Pro"),
+                page_title="六页纸AI",
                 layout="wide"
             )
         except Exception as e:
@@ -109,7 +109,7 @@ def main():
                 st.warning("Logo图片未找到")
                 add_log("warning", "Logo图片未找到，请确保assets/logo.png存在")
             
-            st.title(f"PRFAQ Pro - {st.session_state.user}")
+            st.title(f"助你高效 - {st.session_state.user}")
             
             # 显示用户积分
             user_mgr = UserManager()

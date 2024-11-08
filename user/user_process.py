@@ -38,7 +38,7 @@ def clear_login_info():
 
 def show_login_page():
     """显示登录页面"""
-    st.title("PRFAQ Pro 登录")
+    st.title("六页纸AI登录")
     
     # 如果是注册状态，显示注册表单
     if st.session_state.get('show_registration', False):

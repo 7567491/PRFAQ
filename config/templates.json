@@ -1,37 +1,73 @@
 {
-  "page_title": "PRFAQ Pro 生成器",
+  "page_title": "六页纸AI",
   "sections": {
     "pr": {
-      "title": "PR 生成",
-      "description": "生成产品虚拟新闻稿"
+      "title": "逆向工作法",
+      "description": "通过编写未来新闻稿的形式，明确项目目标和关键成功要素"
     },
     "faq": {
-      "title": "客户 FAQ",
-      "description": "生成客户常见问题解答"
+      "title": "客户FAQ",
+      "description": "生成面向客户的常见问题解答"
     },
     "internal_faq": {
-      "title": "内部 FAQ", 
-      "description": "生成内部常见问题解答"
+      "title": "内部FAQ",
+      "description": "生成内部团队的常见问题解答"
     },
     "mlp": {
-      "title": "最小可爱原型开发",
-      "description": "生成MLP开发计划"
+      "title": "MLP开发",
+      "description": "最小可行产品开发规划"
     },
-    "operation_review": {
-      "title": "运营复盘",
-      "description": "生成运营复盘报告"
+    "all_in_one": {
+      "title": "PRFAQ一键生成",
+      "description": "一键生成完整的PRFAQ文档"
+    },
+    "aar": {
+      "title": "复盘六步法",
+      "description": "系统化的项目复盘方法"
+    },
+    "career_test": {
+      "title": "职业测评",
+      "description": "全面的职业倾向评估"
+    },
+    "admin": {
+      "title": "用户管理",
+      "description": "管理系统用户"
+    },
+    "db_admin": {
+      "title": "数据库管理",
+      "description": "管理系统数据库"
+    },
+    "chat_test": {
+      "title": "AI聊天测试",
+      "description": "测试AI对话功能"
+    },
+    "history": {
+      "title": "历史记录",
+      "description": "查看历史生成记录"
+    },
+    "bill": {
+      "title": "积分明细",
+      "description": "查看积分使用明细"
     }
   },
-  "form_fields": {
-    "customer": {
-      "label": "客户",
-      "placeholder": "XX客户",
-      "default": "产品经理"
-    },
-    "scenario": {
-      "label": "场景",
-      "placeholder": "XX场景",
-      "default": "开发新产品的场景"
-    }
+  "login": {
+    "title": "六页纸AI - 登录",
+    "welcome": "欢迎使用六页纸AI",
+    "register": "新用户注册",
+    "forgot_password": "忘记密码"
+  },
+  "errors": {
+    "config_load": "配置文件加载失败",
+    "db_upgrade": "数据库升级失败",
+    "auth_failed": "认证失败",
+    "permission_denied": "权限不足",
+    "server_error": "服务器错误"
+  },
+  "success": {
+    "login": "登录成功",
+    "logout": "退出成功",
+    "register": "注册成功",
+    "generate": "生成成功",
+    "save": "保存成功"
   }
 } 
