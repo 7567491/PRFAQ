@@ -81,6 +81,88 @@
 
 ### users 表
 用户信息表，存储用户账户和使用统计
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | 主键，自增 |
+| username | TEXT | 用户名，唯一 |
+| password | TEXT | 密码哈希值 |
+| email | TEXT | 电子邮件 |
+| role | TEXT | 用户角色(admin/user) |
+| created_at | TIMESTAMP | 创建时间 |
+| last_login | TIMESTAMP | 最后登录时间 |
+| status | INTEGER | 账户状态(0:禁用,1:正常) |
+| tokens | INTEGER | 剩余令牌数 |
+
+### bills 表
+账单记录表，记录用户消费
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | 主键，自增 |
+| user_id | INTEGER | 用户ID，外键 |
+| amount | DECIMAL | 消费金额 |
+| tokens | INTEGER | 消费令牌数 |
+| type | TEXT | 消费类型 |
+| created_at | TIMESTAMP | 创建时间 |
+| status | INTEGER | 支付状态(0:未支付,1:已支付) |
+
+### logs 表
+系统日志表，记录用户操作
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | 主键，自增 |
+| user_id | INTEGER | 用户ID，外键 |
+| action | TEXT | 操作类型 |
+| details | TEXT | 操作详情 |
+| ip | TEXT | IP地址 |
+| created_at | TIMESTAMP | 创建时间 |
+
+### prfaqs 表
+PRFAQ记录表，存储生成的内容
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | 主键，自增 |
+| user_id | INTEGER | 用户ID，外键 |
+| title | TEXT | 标题 |
+| content | TEXT | 内容 |
+| type | TEXT | 类型(pr/faq/mlp/aar) |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+| status | INTEGER | 状态(0:草稿,1:完成) |
+
+### api_keys 表
+API密钥管理表
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | 主键，自增 |
+| user_id | INTEGER | 用户ID，外键 |
+| api_key | TEXT | API密钥 |
+| provider | TEXT | 提供商(openai/azure) |
+| created_at | TIMESTAMP | 创建时间 |
+| expired_at | TIMESTAMP | 过期时间 |
+| status | INTEGER | 状态(0:禁用,1:正常) |
+
+### settings 表
+系统设置表
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | 主键，自增 |
+| key | TEXT | 设置键名 |
+| value | TEXT | 设置值 |
+| type | TEXT | 值类型 |
+| description | TEXT | 描述 |
+| updated_at | TIMESTAMP | 更新时间 |
+
+### templates 表
+模板管理表
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | 主键，自增 |
+| name | TEXT | 模板名称 |
+| content | TEXT | 模板内容 |
+| type | TEXT | 模板类型 |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+| status | INTEGER | 状态(0:禁用,1:正常) |
 
 ## 部署说明
 1. 确保安装所有依赖

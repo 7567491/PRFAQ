@@ -46,3 +46,9 @@ twine==5.0.0
 # Plotting
 plotly==5.13.1
 uuid>=1.30
+
+# HTTP Client
+aiohttp>=3.8.0
+
+# Asyncio
+nest_asyncio>=1.5.6

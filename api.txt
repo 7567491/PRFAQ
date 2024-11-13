@@ -1,0 +1,64 @@
+# API 调用说明文档
+
+## API密钥管理逻辑
+
+### 1. 密钥存储
+- 主要配置文件：config/config.json
+- 环境变量文件：.env
+- 数据库表：api_keys
+
+### 2. 密钥获取优先级
+1. 数据库 api_keys 表中的用户特定密钥
+2. 环境变量 .env 文件中的 OPENAI_API_KEY
+3. config/config.json 中的默认密钥
+4. 用户在界面输入的临时密钥
+
+### 3. API调用流程
+1. modules/api.py 作为统一的 API 调用入口
+2. 调用前检查密钥有效性
+3. 根据优先级获取可用密钥
+4. 执行 API 调用
+5. 记录使用情况到 bills 表和 logs 表
+
+## 使用 config.json 的文件列表
+
+### 1. modules/api.py
+- 读取 API 配置信息
+- 获取默认模型参数
+- 读取 API 端点URL
+
+### 2. modules/all_in_one_generator.py
+- 读取生成器配置
+- 获取模型参数
+- 读取提示词模板
+
+### 3. user/user_process.py
+- 读取用户配置
+- 获取认证设置
+- 读取权限配置
+
+### 4. app.py
+- 读取应用全局配置
+- 获取界面设置
+- 读取功能开关配置
+
+### 5. user/admin.py
+- 读取管理员配置
+- 获取后台设置
+- 读取管理权限
+
+### 6. user/bill.py
+- 读取计费配置
+- 获取价格设置
+- 读取计费规则
+
+### 7. user/logger.py
+- 读取日志配置
+- 获取日志级别
+- 读取日志存储设置
+
+## config.json 结构 
+
+## 迁移到 .env 配置方案
+
+### 1. .env 文件结构
