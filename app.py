@@ -141,10 +141,10 @@ def main():
             # 主要功能按钮
             st.header("主要功能")
             
-            if st.button("🎯 职业测试", use_container_width=True):
+            if st.button("🎯 领导力测评", use_container_width=True):
                 clear_main_content()
                 st.session_state.current_section = 'career_test'
-                add_log("info", "进入职业测试")
+                add_log("info", "进入领导力测评")
 
             if st.button("📰 逆向工作法", use_container_width=True):
                 clear_main_content()
@@ -267,7 +267,7 @@ def render_main_content(config, templates):
         aar_generator.render()
     elif st.session_state.current_section == 'career_test':
         try:
-            add_log("info", "开始加载职业测试模块...")
+            add_log("info", "开始加载领导力测评模块...")
             
             # 检查必要的目录和文件
             test_dir = Path("test")
@@ -312,12 +312,12 @@ def render_main_content(config, templates):
                     # 只保存最终显示的结果文本
                     save_history(
                         st.session_state.user,
-                        'career_test',
+                        'leadership_test',
                         st.session_state.final_result  # 最终显示的结果文本
                     )
-                    add_log("info", "职业测评结果已保存到历史记录")
+                    add_log("info", "领导力测评结果已保存到历史记录")
                 except Exception as e:
-                    add_log("error", f"保存职业测评结果失败: {str(e)}")
+                    add_log("error", f"保存领导力测评结果失败: {str(e)}")
             
         except ImportError as e:
             error_msg = f"导入模块失败: {str(e)}\n"
@@ -330,7 +330,7 @@ def render_main_content(config, templates):
             st.error(error_msg)
             add_log("error", error_msg)
         except Exception as e:
-            error_msg = f"加载职业测试模块失败: {str(e)}\n"
+            error_msg = f"加载领导力测评模块失败: {str(e)}\n"
             error_msg += f"错误类型: {type(e).__name__}\n"
             error_msg += f"错误位置: {traceback.format_exc()}"
             st.error(error_msg)

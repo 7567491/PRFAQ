@@ -114,14 +114,20 @@ def process_test_results(answers):
             'holland': normalize_scores(holland_scores)
         }
         
+        # 返回结果时包含原始答案
         return {
-            'scores': normalized_scores,
+            'scores': {
+                'mbti': mbti_scores,
+                'big5': big5_scores,
+                'holland': holland_scores
+            },
             'mbti_type': get_mbti_type(),
             'dominant_holland': sorted(
                 holland_scores.items(), 
                 key=lambda x: x[1], 
                 reverse=True
-            )[:2]
+            )[:2],
+            'answers': answers  # 添加原始答案数据
         }
     
     except Exception as e:

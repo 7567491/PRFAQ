@@ -38,156 +38,43 @@ class CareerTest:
     def save_test_result(self, results):
         """保存测试结果到历史记录"""
         try:
-            print("\n=== 开始保存测试结果 ===")
+            from modules.utils import add_log
+            
+            add_log("info", "=== 开始保存测试结果 ===")
+            add_log("info", f"原始结果数据: {json.dumps(results, ensure_ascii=False)}")
             
             # 生成完整的测评报告
             report = generate_report(results)
             if not report:
                 error_msg = "生成报告失败: report 为空"
-                print(error_msg)
+                add_log("error", error_msg)
                 st.error(error_msg)
                 return False
             
+            add_log("info", "报告生成成功，准备保存到历史记录")
+            
             try:
-                # 获取MBTI和霍兰德代码的主要特征
-                mbti_type = results.get('mbti_type', 'N/A')
-                holland_primary = report.get('personality_traits', {}).get('holland', {}).get('primary', {}).get('title', '未知')
-                big5_traits = report.get('personality_traits', {}).get('big5', {})
-                leadership_scores = []
-                
-                # 安全获取领导力得分
-                try:
-                    raw_scores = report.get('leadership_analysis', {}).get('sorted_scores', [])
-                    for score_data in raw_scores:
-                        if isinstance(score_data, (list, tuple)) and len(score_data) >= 2:
-                            try:
-                                principle = str(score_data[0])
-                                score = float(score_data[1]) if isinstance(score_data[1], (int, float, str)) else 0.0
-                                leadership_scores.append((principle, score))
-                            except (ValueError, TypeError) as e:
-                                print(f"处理单个领导力得分时出错: {str(e)}")
-                                continue
-                except Exception as e:
-                    print(f"处理领导力得分列表时出错: {str(e)}")
-                    leadership_scores = []
-                
-                # 获取MBTI具体建议
-                mbti_advice = {
-                    'INTJ': "您是战略家型人才，适合从事需要深度思考和规划的工作。建议发展方向：战略咨询、项目规划、研发管理。",
-                    'ENTJ': "您是指挥官型人才，适合担任领导和决策角色。建议发展方向：企业管理、团队领导、业务拓展。",
-                    'INTP': "您是逻辑学家型人才，适合从事分析和研究工作。建议发展方向：数据分析、系统架构、学术研究。",
-                    'ENTP': "您是辩论家型人才，适合创新和探索性工作。建议发展方向：创业、产品创新、市场策略。",
-                    'INFJ': "您是提倡者型人才，适合从事助人和创造性工作。建议发展方向：人力资源、心理咨询、创意设计。",
-                    'ENFJ': "您是教导主任型人才，适合培训和引导他人。建议发展方向：培训讲师、团队建设、教育管理。",
-                    'INFP': "您是调停者型人才，适合个性化和创意工作。建议发展方向：文案创作、艺术设计、个人咨询。",
-                    'ENFP': "您是竞选者型人才，适合人际互动和创新工作。建议发展方向：市场营销、公共关系、创意总监。",
-                    'ISTJ': "您是物流师型人才，适合精确和系统化工作。建议发展方向：项目管理、质量控制、财务分析。",
-                    'ESTJ': "您是总经理型人才，适合管理和执行工作。建议发展方向：运营管理、行政主管、项目督导。",
-                    'ISFJ': "您是守卫者型人才，适合服务和支持性工作。建议发展方向：客户服务、行政支持、医疗护理。",
-                    'ESFJ': "您是执政官型人才，适合团队协作和服务工作。建议发展方向：团队协调、客户关系、社区服务。",
-                    'ISTP': "您是鉴赏家型人才，适合技术和实践性工作。建议发展方向：技术开发、工程设计、产品测试。",
-                    'ESTP': "您是企业家型人才，适合行动导向的工作。建议发展方向：销售管理、风险投资、项目执行。",
-                    'ISFP': "您是探险家型人才，适合艺术和体验性工作。建议发展方向：艺术创作、产品设计、体验设计。",
-                    'ESFP': "您是表演者型人才，适合互动和表现型工作。建议发展方向：活动策划、销售推广、品牌推广。"
+                # 准备历史记录数据
+                history_data = {
+                    'user_id': st.session_state.user,
+                    'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    'type': 'leadership_test',
+                    'input_text': "领导力测评",
+                    'output_text': json.dumps(report, ensure_ascii=False, indent=2),
+                    'content': report
                 }
                 
-                # 生成具体的发展建议
-                development_suggestions = self.generate_development_suggestions(
-                    mbti_type, 
-                    big5_traits, 
-                    holland_primary, 
-                    leadership_scores
-                )
+                # 保存历史记录
+                from modules.utils import save_history
+                save_history(history_data)
                 
-                # 安全获取霍兰德代码描述
-                holland_description = report.get('personality_traits', {}).get('holland', {}).get('primary', {}).get('description', '暂无具体描述')
+                add_log("info", "=== 测评结果保存成功 ===")
+                return True
                 
-                # 生成最终显示的文本结果
-                final_text = (
-                    f"# 职业测评结果报告\n\n"
-                    f"## 个性类型分析\n"
-                    f"MBTI类型：{mbti_type}\n"
-                    f"{mbti_advice.get(mbti_type, '未能获取具体的MBTI类型建议')}\n\n"
-                    f"主要职业倾向：{holland_primary}\n"
-                    f"{holland_description}\n\n"
-                    f"## 人格特征分析\n"
-                )
-                
-                # 安全添加大五人格分析
-                try:
-                    final_text += "\n".join([f"- {k}: {v.get('interpretation', '暂无解释')}" 
-                                           for k, v in big5_traits.items()])
-                except Exception as e:
-                    print(f"处理大五人格分析时出错: {str(e)}")
-                    final_text += "- 暂无详细人格特征分析"
-                
-                # 安全添加职业建议
-                final_text += "\n\n## 推荐职业方向\n"
-                try:
-                    for suggestion in report.get('career_suggestions', []):
-                        final_text += f"### {suggestion.get('title', '未知职业')}\n"
-                        for position in suggestion.get('positions', []):
-                            final_text += (
-                                f"- {position.get('name', '未知职位')}\n"
-                                f"  优势匹配：{', '.join(position.get('strengths', ['待评估']))}\n"
-                                f"  建议提升：{position.get('improvements', '待评估')}\n"
-                            )
-                except Exception as e:
-                    print(f"处理职业建议时出错: {str(e)}")
-                    final_text += "暂无具体职业建议\n"
-                
-                # 添加发展建议
-                final_text += (
-                    f"\n## 发展建议\n"
-                    f"### 个人优势\n{development_suggestions.get('strengths', '待评估')}\n\n"
-                    f"### 短期发展重点\n{development_suggestions.get('improvements', '待评估')}\n\n"
-                    f"### 长期发展建议\n{development_suggestions.get('career_path', '待评估')}\n\n"
-                    f"### 领导力发展建议\n{development_suggestions.get('leadership', '待评估')}"
-                )
-                
-                try:
-                    # 计算字符数和保存结果
-                    input_text = "职业测评"
-                    
-                    # 添加字符使用记录
-                    if not add_letters_record(
-                        input_letters=len(input_text),
-                        output_letters=len(final_text),
-                        api_name="career_test",
-                        operation="职业测评"
-                    ):
-                        print("添加字符使用记录失败")
-                        return False
-                    
-                    # 准备历史记录数据
-                    history_data = {
-                        'user_id': st.session_state.user,
-                        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        'type': 'career_test',
-                        'input_text': input_text,
-                        'output_text': final_text,
-                        'content': final_text  # 保存完整的测评报告
-                    }
-                    
-                    # 保存历史记录
-                    from modules.utils import save_history
-                    save_history(history_data)
-                    
-                    # 保存到 session_state 供显示使用
-                    st.session_state.final_result = final_text
-                    
-                    print("=== 测评结果保存成功 ===")
-                    return True
-                    
-                except Exception as e:
-                    error_msg = f"保存结果失败: {str(e)}"
-                    print(error_msg)
-                    st.error(error_msg)
-                    return False
-                    
             except Exception as e:
-                error_msg = f"处理测评数据时出错: {str(e)}"
-                print(error_msg)
+                error_msg = f"保存历史记录失败: {str(e)}"
+                add_log("error", error_msg)
+                add_log("error", traceback.format_exc())
                 st.error(error_msg)
                 return False
                 
@@ -198,8 +85,8 @@ class CareerTest:
                 f"错误信息: {str(e)}\n"
                 f"错误位置: {traceback.format_exc()}"
             )
-            print(error_msg)
-            st.error(error_msg)
+            add_log("error", error_msg)
+            st.error(f"保存测试结果失败: {str(e)}")
             return False
 
     def display_situation_question(self, q, index, current_answers):
@@ -331,7 +218,7 @@ class CareerTest:
                     'ESFJ': "您是执政官型人才，适合团队协作和服务工作。建议发展方向：团队协调、客户关系、社区服务。",
                     'ISTP': "您是鉴赏家型人才，适合技术和实践性工作。建议发展方向：技术开发、工程设计、产品测试。",
                     'ESTP': "您是企业家型人才，适合行动导向的工作。建议发展方向：销售管理、风险投资、项目执行。",
-                    'ISFP': "您是探险家型人才，适合艺术和体验性工作。建议发展方向：艺术创作、产品设计、体验设计。",
+                    'ISFP': "您是探险家型人才，适合艺术体验性工作。建议发展方向：艺术创作、产品设计、体验设计。",
                     'ESFP': "您是表演者型人才，适合互动和表现型工作。建议发展方向：活动策划、销售推广、品牌推广。"
                 }
                 
@@ -343,7 +230,7 @@ class CareerTest:
                     leadership_scores
                 )
                 
-                # 生成完整的文本结果
+                # 生成完整的文本结
                 final_text = (
                     f"# 职业测评结果报告\n\n"
                     f"## 个性类型分析\n"
@@ -391,7 +278,7 @@ class CareerTest:
         st.write("""
         ## 职业测评系统
         
-        欢迎使用职业测评系统！本系统将从以下几个维度对您进行全面的职业倾向评估：
+        欢迎使用职业测评系统！本系统将从以下几个维度对您进行全面的职业倾评估：
         
         1. 大五人格测评
         2. MBTI性格类型
@@ -411,9 +298,9 @@ class CareerTest:
         if not st.session_state.test_started:
             # 显示介绍页面
             st.write("""
-            ## 职业测评系统
+            ## 领导力测评系统
             
-            欢迎使用职业测评系统！本系统将从以下几个维度对您进行全面的职业倾向评估：
+            欢迎使用领导力测评系统！本系统将从以下几个维度对您进行全面的领导力潜质评估：
             
             1. 大五人格测评
             2. MBTI性格类型
@@ -422,10 +309,10 @@ class CareerTest:
             
             测评完成后，您将获得：
             - 个性特征分析报告
-            - 职业发展建议
-            - 能力提升计划
+            - 领导力潜质分析
+            - 发展建议
             
-            点击"开始测评"即可开始您的职业探索之旅！
+            点击"开始测评"即可开始您的领导力探索之旅！
             """)
             
             if st.button("开始测评", type="primary"):
@@ -506,20 +393,16 @@ class CareerTest:
                 st.divider()
                 
                 with st.expander("个性特质分析", expanded=True):
-                    # 显示大五人格、MBTI和霍兰德代码分析结果
                     self.display_personality_traits(report)
                 
                 with st.expander("职业建议", expanded=True):
-                    # 显示职业建议
                     self.display_career_suggestions(report)
                 
-                with st.expander("发展建议", expanded=True):
-                    # 显示发展建议
-                    self.display_development_suggestions(report)
-                
                 with st.expander("领导力培养", expanded=True):
-                    # 显示领导力分析
                     self.display_leadership_analysis(report)
+                    
+                with st.expander("发展建议", expanded=True):
+                    self.display_development_suggestions(report)
                 
                 # 下载报告按钮
                 st.download_button(
@@ -564,35 +447,118 @@ class CareerTest:
 
     def display_development_suggestions(self, report):
         """显示发展建议"""
-        # 短期发展建议
-        st.subheader("短期发展建议")
-        st.write(report['development_suggestions']['short_term']['strengths'])
-        st.write(report['development_suggestions']['short_term']['improvements'])
-        
-        # 长期发展建议
-        st.subheader("长期发展建议")
-        st.write(report['development_suggestions']['long_term']['career_path'])
-        st.write(report['development_suggestions']['long_term']['leadership'])
+        try:
+            from modules.utils import add_log, load_config
+            from modules.api import APIClient
+            import streamlit as st
+            
+            # 从配置文件加载配置
+            try:
+                config = load_config()
+                if not config:
+                    st.error("配置文件加载失败")
+                    add_log("error", "配置文件加载失败")
+                    return
+            except Exception as e:
+                st.error(f"加载配置文件失败: {str(e)}")
+                add_log("error", f"加载配置文件失败: {str(e)}")
+                return
+            
+            # 准备提示词
+            prompt = f"""
+作为一位资深的职业发展顾问，请根据以下测评结果，为这位候选人提供一份全面的领导力发展建议。
+
+测评结果：
+1. MBTI类型：{report['personality_traits']['mbti']['type']}
+   {report['personality_traits']['mbti']['description']}
+
+2. 大五人格特征：
+{json.dumps(report['personality_traits']['big5'], ensure_ascii=False, indent=2)}
+
+3. 霍兰德职业兴趣：
+- 主导类型：{report['personality_traits']['holland']['primary']['title']}
+  {report['personality_traits']['holland']['primary']['description']}
+- 次要类型：{report['personality_traits']['holland']['secondary']['title']}
+  {report['personality_traits']['holland']['secondary']['description']}
+
+4. 领导力准则评估（得分从高到低排序）：
+{json.dumps(report['leadership_analysis']['sorted_scores'], ensure_ascii=False, indent=2)}
+
+请提供一份不超过1000字的综合分析和发展建议，内容应包括：
+- 结合所有测评维度，分析此人的核心优势和潜在挑战
+- 基于领导力准则评估结果，就如何发挥优势、提升短板给出具体建议
+- 结合个性特征和职业兴趣，为其领导力发展路径提供长期规划建议
+
+要求：
+1. 使用连贯的段落叙述，避免分点列举
+2. 语言要专业、具体且富有洞察力
+3. 建议要切实可行，并与测评结果紧密关联
+4. 重点关注领导力发展，但也要兼顾个人成长
+"""
+
+            # 调用API获取建议
+            api_client = APIClient(config)
+            
+            # 使用 placeholder 显示生成过程
+            with st.empty():
+                st.subheader("综合分析与发展建议")
+                full_response = ""
+                
+                # 使用 generate_content_stream 替代 chat_completion
+                for chunk in api_client.generate_content_stream(prompt, "claude"):
+                    if chunk:
+                        full_response += chunk
+                        st.write(full_response)
+                        
+                if not full_response:
+                    st.error("生成发展建议时出错")
+                    
+        except Exception as e:
+            st.error(f"生成发展建议失败: {str(e)}")
+            add_log("error", f"生成发展建议失败: {str(e)}\n{traceback.format_exc()}")
 
     def display_leadership_analysis(self, report):
         """显示领导力分析"""
-        st.subheader("领导力则得分")
+        st.subheader("领导力准则得分")
+        
+        # 创建所有准则得分的数据框
         scores_df = pd.DataFrame([
             {
-                '则': name,
-                '得分': data['score']
+                '领导力准则': name,
+                '得分': round(score, 1)  # 保留一位小数
             }
-            for name, data in report['leadership_analysis']['sorted_scores']
+            for name, score in report['leadership_analysis']['sorted_scores']
         ])
-        st.dataframe(scores_df, use_container_width=True)
         
-        # 显示高分准则分析
-        st.subheader("优势准则分析")
+        # 显示完整的得分表格
+        st.dataframe(
+            scores_df,
+            use_container_width=True,
+            column_config={
+                "领导力准则": st.column_config.TextColumn("领导力准则", width="medium"),
+                "得分": st.column_config.NumberColumn(
+                    "得分",
+                    format="%.1f",
+                    min_value=50,
+                    max_value=100
+                )
+            }
+        )
+        
+        # 显示最高分准则分析
+        st.subheader("优势准则（得分最高的3项）")
         for analysis in report['leadership_analysis']['top_analysis']:
             with st.container():
-                st.write(f"**{analysis['name']}** (得分: {analysis['score']})")
-                st.write(analysis['description'])
-                st.write(analysis['strength_analysis'])
+                st.write(f"**{analysis['name']}** (得分: {round(analysis['score'], 1)})")
+                st.write(f"{analysis['description']}")
+                st.divider()
+        
+        # 显示最低分准则分析
+        st.subheader("需要提升的准则（得分最低的2项）")
+        for analysis in report['leadership_analysis']['bottom_analysis']:
+            with st.container():
+                st.write(f"**{analysis['name']}** (得分: {round(analysis['score'], 1)})")
+                st.write(f"{analysis['description']}")
                 st.divider()
 
     def validate_answers(self, answers):
@@ -740,12 +706,12 @@ class CareerTest:
                 f"错误位置: {traceback.format_exc()}"
             )
             print(error_msg)
-            st.error(f"加载数据文件失败: {str(e)}")
+            st.error(f"加载据文件失败: {str(e)}")
             return None, None
 
     def display_final_result(self, result_text):
         """显示最终结果"""
-        st.markdown("## 职业测评结果")
+        st.markdown("## 领导力测评结果")
         st.markdown(result_text)
         
         # 保存最终结果到 session_state
@@ -768,7 +734,7 @@ class CareerTest:
             'ISFJ': ["服务意识", "责任心", "团队协作能力"],
             'ESFJ': ["人际协调能力", "服务意识", "团队合作能力"],
             'ISTP': ["实践操作能力", "问题解决能力", "危机处理能力"],
-            'ESTP': ["行动力", "资源整合能力", "机会把握力"],
+            'ESTP': ["动力", "资源整合能力", "机会把握力"],
             'ISFP': ["艺术审美能力", "实践能力", "适应能力"],
             'ESFP': ["表现力", "人际交往能力", "现场应变能力"]
         }
@@ -823,12 +789,12 @@ class CareerTest:
         # 如果没有有效的领导力建议，添加默认建议
         if not leadership_dev:
             leadership_dev = ["建议通过参与项目实践来提升领导力", 
-                            "可以从小型项目开始，逐步承担更多责任"]
+                            "可以从小型项目开，逐步承担更多责任"]
         
         # 整合所有建议
         suggestions = {
             'strengths': f"您的优势在于：\n" + "\n".join([f"- {s}" for s in strengths]),
-            'improvements': f"短期内可以重点提升：\n" + "\n".join([f"- {i}" for i in improvement_areas]) if improvement_areas else "您的各项能力都比较均衡，建议：\n- 继续保持并深化现有优势\n- 在工作中尝试承担更具挑战性的任务",
+            'improvements': f"短期内可以重点提升：\n" + "\n".join([f"- {i}" for i in improvement_areas]) if improvement_areas else "您的各项能力比较均衡，建议：\n- 继续保持并深化现有优势\n- 在工作中尝试承担更具挑战性的任务",
             'career_path': f"建议的职业发展路径：\n{career_path}",
             'leadership': f"领导力发展建议：\n" + "\n".join([f"- {l}" for l in leadership_dev])
         }

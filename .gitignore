@@ -53,3 +53,4 @@ config.py
 
 # 凭证文件
 .credentials.json
+db/users.db
