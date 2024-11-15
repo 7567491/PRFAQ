@@ -4,7 +4,98 @@ from pathlib import Path
 import shutil
 from datetime import datetime
 import humanize
-from modules.utils import add_log
+from modules.logger import add_log
+import sqlite3
+
+def backup_database(reason: str = "manual", operator: str = "system") -> bool:
+    """备份数据库"""
+    try:
+        # 创建备份目录
+        backup_root = Path("db/backup")
+        backup_root.mkdir(parents=True, exist_ok=True)
+        
+        # 生成备份文件名
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_file = f"users_{timestamp}.db"
+        backup_path = backup_root / backup_file
+        
+        # 复制数据库文件
+        shutil.copy2('db/users.db', backup_path)
+        
+        # 获取数据库统计信息
+        conn = sqlite3.connect('db/users.db')
+        cursor = conn.cursor()
+        
+        # 获取用户数
+        cursor.execute("SELECT COUNT(*) FROM users")
+        user_count = cursor.fetchone()[0]
+        
+        # 获取账单数
+        cursor.execute("SELECT COUNT(*) FROM bills")
+        bill_count = cursor.fetchone()[0]
+        
+        # 获取历史记录数
+        cursor.execute("SELECT COUNT(*) FROM history")
+        history_count = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        # 获取文件大小
+        file_size = backup_path.stat().st_size
+        
+        # 更新备份记录
+        backup_json = backup_root / "db.json"
+        backups = []
+        if backup_json.exists():
+            with open(backup_json, 'r', encoding='utf-8') as f:
+                backups = json.load(f)
+        
+        # 添加新的备份记录
+        backups.append({
+            'datetime': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'filename': backup_file,
+            'path': str(backup_path),
+            'reason': reason,
+            'operator': operator,
+            'file_size': file_size,
+            'user_count': user_count,
+            'bill_count': bill_count,
+            'history_count': history_count
+        })
+        
+        # 保存备份记录
+        with open(backup_json, 'w', encoding='utf-8') as f:
+            json.dump(backups, f, ensure_ascii=False, indent=2)
+        
+        add_log("info", f"数据库备份成功: {backup_file}")
+        return True
+        
+    except Exception as e:
+        add_log("error", f"数据库备份失败: {str(e)}")
+        return False
+
+def restore_database(backup_file: str) -> bool:
+    """从备份文件恢复数据库"""
+    try:
+        # 验证备份文件
+        backup_path = Path("db/backup") / backup_file
+        if not backup_path.exists():
+            add_log("error", f"备份文件不存在: {backup_file}")
+            return False
+            
+        # 先备份当前数据库
+        if not backup_database(reason="restore_backup", operator=st.session_state.get('user', 'system')):
+            add_log("error", "恢复前备份失败")
+            return False
+            
+        # 恢复数据库
+        shutil.copy2(backup_path, 'db/users.db')
+        add_log("info", f"数据库已从备份 {backup_file} 恢复")
+        return True
+        
+    except Exception as e:
+        add_log("error", f"数据库恢复失败: {str(e)}")
+        return False
 
 def show_restore_interface():
     """显示数据库恢复界面"""
@@ -85,21 +176,11 @@ def show_restore_interface():
     )
     
     if st.button("恢复选中的备份", use_container_width=True):
-        try:
-            # 先备份当前数据库
-            if backup_database(reason="restore_backup", operator=st.session_state.user):
-                # 获取选中的备份文件路径
-                backup_path = [b['path'] for b in backups if b['filename'] == selected_backup][0]
-                
-                # 恢复数据库
-                shutil.copy2(backup_path, 'db/users.db')
-                st.success("数据库恢复成功！")
-                add_log("info", f"从备份 {selected_backup} 恢复数据库成功")
-                
-                # 刷新页面
-                st.rerun()
-            else:
-                st.error("备份当前数据库失败，恢复操作已取消")
-        except Exception as e:
-            st.error(f"恢复数据库失败: {str(e)}")
-            add_log("error", f"恢复数据库失败: {str(e)}") 
+        if restore_database(selected_backup):
+            st.success("数据库恢复成功！")
+            st.rerun()
+        else:
+            st.error("数据库恢复失败，请查看日志")
+
+# 导出需要的函数
+__all__ = ['restore_database', 'backup_database', 'show_restore_interface'] 
