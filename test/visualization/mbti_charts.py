@@ -58,17 +58,20 @@ class MBTIVisualizer:
             else:
                 display_score = 50 - (strength * 50 / 20)
             
-            # 计算布局位置（增加垂直间距）
+            # 计算布局位置（确保在0-1范围内）
             row = i // 2
             col = i % 2
             x_pos = 0.25 + col * 0.5
-            y_pos = 0.85 - row * 0.4  # 增加行间距
+            y_pos = 0.85 - row * 0.45  # 调整垂直间距，确保不超出范围
             
             # 添加仪表盘
             fig.add_trace(go.Indicator(
                 mode="gauge+number",
                 value=display_score,
-                domain={'x': [x_pos-0.2, x_pos+0.2], 'y': [y_pos-0.15, y_pos+0.15]},  # 调整仪表盘大小
+                domain={
+                    'x': [max(0, x_pos-0.2), min(1, x_pos+0.2)],
+                    'y': [max(0, y_pos-0.15), min(1, y_pos+0.15)]
+                },
                 title={
                     'text': f"{dim['symbol']} {dim['title']}<br>"
                            f"<span style='font-size:0.8em'>{dim['left']} - {dim['right']}</span>",
@@ -100,7 +103,7 @@ class MBTIVisualizer:
             fig.add_annotation(
                 text=f"偏好强度: {strength:.1f}",
                 x=x_pos,
-                y=y_pos - 0.18,  # 调整标注位置
+                y=max(0, y_pos - 0.18),  # 确保注释位置不超出范围
                 showarrow=False,
                 font={'size': 12}
             )
@@ -117,8 +120,8 @@ class MBTIVisualizer:
             },
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            height=700,  # 增加整体高度
-            margin=dict(t=100, b=50, l=50, r=50),  # 调整边距
+            height=800,
+            margin=dict(t=100, b=50, l=50, r=50),
             showlegend=False
         )
         

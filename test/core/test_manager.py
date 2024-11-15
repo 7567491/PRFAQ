@@ -136,6 +136,21 @@ class TestManager:
         st.progress(progress)
         st.write(f"完成: {completed_questions}/{total_questions} 题")
         
+        # 添加顶部提交按钮
+        if completed_questions == total_questions:  # 只有在所有题目都完成时才显示顶部提交按钮
+            if st.button("提交测评", type="primary", key="submit_top"):
+                if question_handler.validate_answers(st.session_state.current_answers):
+                    report = self.process_results()
+                    if report:
+                        st.session_state.current_results = report
+                        st.session_state.test_submitted = True
+                        st.success('测评完成！')
+                        st.rerun()
+                    else:
+                        st.error("处理测评结果失败")
+                else:
+                    st.error("请确保所有题目都已完成作答")
+        
         # 第一部分：情境选择题（1-9题）
         st.header("第一部分：情境选择题")
         for i in range(9):
@@ -161,9 +176,9 @@ class TestManager:
             )
             st.session_state.current_answers.update(rank_answers)
         
-        # 提交按钮
+        # 底部提交按钮
         st.divider()
-        if st.button("提交测评", type="primary"):
+        if st.button("提交测评", type="primary", key="submit_bottom"):
             if question_handler.validate_answers(st.session_state.current_answers):
                 report = self.process_results()
                 if report:

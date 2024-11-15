@@ -19,6 +19,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from fpdf import FPDF
 
 def load_data():
     """加载所有必要的数据文件"""
@@ -89,7 +90,7 @@ def analyze_big5(scores):
         },
         '情绪稳定性': {
             'high': '情绪稳定，能很好地控制压力和焦虑。在面对挑战时保持冷静。',
-            'low': '情感丰富，对环境变化比较敏感。对周围的细微变化有敏锐感知。'
+            'low': '情感丰富，对环境变化比较敏感。周围的细微变化有敏锐感知。'
         }
     }
     
@@ -338,7 +339,7 @@ def generate_report(results):
                     'improvements': '短期内建议重点提升：\n- 团队协作能力\n- 沟通表达技巧\n- 项目管理能力'
                 },
                 'long_term': {
-                    'career_path': '建议的职业发展路径：\n1. 初期专注于技术能力的提升\n2. 逐步承担项目管理职责\n3. 未来可以向技术总监方向发展',
+                    'career_path': '建议的职业发展路径：\n1. 初期专注于技术能力的提升\n2. 逐步承担项目管理责\n3. 未来可以向技术总监方向发展',
                     'leadership': '领导力发展建议：\n1. 主动参与跨部门项目\n2. 培养团队管理能力\n3. 提升决策和判断能力'
                 }
             }
@@ -461,9 +462,9 @@ class ReportDisplayer:
             # 添加简化的MBTI分数和偏好强度的解释
             st.write("\n#### MBTI分数说明")
             st.write("""
-            仪表盘显示分数（0-100）表示偏好方向：50分以上偏向左侧特质（E/S/T/J），50分以下偏向右侧特质（I/N/F/P）。
+            仪表盘显示分数（0-100）表示偏好方向：50分以偏向左侧特质（E/S/T/J），50分以下偏向右侧特质（I/N/F/P）。
             
-            偏好强度（0-20）表示特质倾向的程度：0-5为轻微，6-10为中等，11-15为明显，16-20为强烈。
+            偏好强度（0-20）表特质倾向的程度：0-5为轻微，6-10为中等，11-15为明显，16-20为强烈。
             """)
             
             st.divider()
@@ -501,6 +502,9 @@ class ReportDisplayer:
                     }
                 ]
             })
+        
+        # 添加简短的推荐理由说明
+        st.write("基于您的性格特质、职业兴趣和领导力表现，为您推荐以下发展方向：")
         
         # 主要和次要发展方向
         col1, col2 = st.columns(2)
@@ -560,6 +564,13 @@ class ReportDisplayer:
     def display_development_suggestions(self, report):
         """显示发展建议"""
         try:
+            # 如果已经有生成的建议，直接显示
+            if hasattr(st.session_state, 'final_result') and st.session_state.final_result:
+                st.subheader("综合分析与发展建议")
+                st.write(st.session_state.final_result)
+                return
+            
+            # 否则生成新的建议
             config = load_config()
             if not config:
                 st.error("配置文件加载失败")
@@ -589,7 +600,7 @@ class ReportDisplayer:
                 for suggestion in report['career_suggestions']
             ])
             
-            # 准备完整的提示词
+            # 准备完整提示词
             prompt = f"""
 作为一位资深的职业发展顾问，请根据以下详细的测评结果，为这位候选人提供一份全面的领导力发展建议。
 
@@ -618,7 +629,7 @@ class ReportDisplayer:
 三、职业建议：
 {career_suggestions}
 
-基于以上全面的测评结果，请提供一份不超过1000字的综合分析和发展建议，内容应包括：
+基于以上全面的测评结果，请提供一份不超过100字的综合分析和发展建议，内容应包括：
 1. 结合所有测评维度，分析此人的核心优势和潜在挑战
 2. 基于领导力准则评估结果，就如何发挥优势、提升短板给出具体建议
 3. 结合个性特征和职业兴趣，为其领导力发展路径提供长期规划建议
@@ -656,31 +667,46 @@ class ReportDisplayer:
     def export_report(self, report):
         """导出完整报告为PDF"""
         try:
-            # 创建PDF内存对象
-            pdf_buffer = io.BytesIO()
+            add_log("info", "开始生成PDF报告")
+            
+            # 检查是否已有生成的建议
+            if not hasattr(st.session_state, 'final_result') or not st.session_state.final_result:
+                st.error("请先生成发展建议")
+                add_log("error", "缺少发展建议内容")
+                return
+            
+            # 使用reportlab替代fpdf
+            try:
+                from reportlab.lib import colors
+                from reportlab.lib.pagesizes import A4
+                from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
+                from reportlab.pdfbase import pdfmetrics
+                from reportlab.pdfbase.ttfonts import TTFont
+                import io
+            except ImportError:
+                st.error("请先安装 reportlab 库: pip install reportlab")
+                add_log("error", "缺少 reportlab 库，无法生成 PDF 报告")
+                return
+
+            # 创建PDF缓冲区
+            buffer = io.BytesIO()
             
             # 创建PDF文档
             doc = SimpleDocTemplate(
-                pdf_buffer,
+                buffer,
                 pagesize=A4,
-                rightMargin=72,
-                leftMargin=72,
-                topMargin=72,
-                bottomMargin=72
+                rightMargin=30,
+                leftMargin=30,
+                topMargin=30,
+                bottomMargin=30
             )
-            
-            # 注册中文字体（假设使用系统字体）
-            try:
-                pdfmetrics.registerFont(TTFont('SimSun', 'C:/Windows/Fonts/simsun.ttc'))
-            except:
-                # 如果找不到系统字体，使用默认字体
-                pass
             
             # 创建样式
             styles = getSampleStyleSheet()
             styles.add(ParagraphStyle(
                 name='Chinese',
-                fontName='SimSun' if 'SimSun' in pdfmetrics.getRegisteredFontNames() else 'Helvetica',
+                fontName='Helvetica',  # 使用默认字体
                 fontSize=10,
                 leading=14
             ))
@@ -689,11 +715,10 @@ class ReportDisplayer:
             story = []
             
             # 添加标题
-            title = Paragraph(
+            story.append(Paragraph(
                 f"六页纸领导力测评报告 - {st.session_state.user}",
                 styles['Title']
-            )
-            story.append(title)
+            ))
             
             # 添加时间
             story.append(Paragraph(
@@ -702,78 +727,45 @@ class ReportDisplayer:
             ))
             story.append(Spacer(1, 12))
             
-            # 保存当前页面上的所有图表
-            figures = {}
+            # 添加报告内容
+            for line in st.session_state.report_content['text']:
+                if line.startswith('# '):
+                    story.append(Paragraph(line[2:], styles['Title']))
+                elif line.startswith('## '):
+                    story.append(Paragraph(line[3:], styles['Heading1']))
+                elif line.startswith('### '):
+                    story.append(Paragraph(line[4:], styles['Heading2']))
+                else:
+                    story.append(Paragraph(line, styles['Chinese']))
+                story.append(Spacer(1, 6))
             
-            # 保存大五人格图
-            big5_fig = self.big5_viz.create_dual_bar_chart({
-                trait: data['score'] for trait, data in report['personality_traits']['big5'].items()
-            })
-            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
-                big5_fig.write_image(tmp_file.name)
-                figures['big5'] = tmp_file.name
-            
-            # 保存MBTI图
-            mbti_fig = self.mbti_viz.create_gauge_chart(
-                report['scores']['mbti'],
-                report.get('mbti_metadata', {})
-            )
-            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
-                mbti_fig.write_image(tmp_file.name)
-                figures['mbti'] = tmp_file.name
-            
-            # 保存霍兰德图
-            holland_fig = self.holland_viz.create_career_map(report['scores']['holland'])
-            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
-                holland_fig.write_image(tmp_file.name)
-                figures['holland'] = tmp_file.name
-            
-            # 保存领导力准则图
-            lp_fig = self.lp_viz.create_rose_chart(report['leadership_analysis']['sorted_scores'])
-            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
-                lp_fig.write_image(tmp_file.name)
-                figures['leadership'] = tmp_file.name
-            
-            # 添加各部分内容和图表
-            sections = [
-                ("个性特质分析", ['big5', 'mbti']),
-                ("霍兰德职业兴趣", ['holland']),
-                ("领导力准则分析", ['leadership'])
-            ]
-            
-            for section_title, section_figures in sections:
-                story.append(Paragraph(section_title, styles['Heading1']))
-                story.append(Spacer(1, 12))
-                
-                # 添加该部分的图表
-                for fig_name in section_figures:
-                    if fig_name in figures:
-                        img = Image(figures[fig_name], width=450, height=300)
-                        story.append(img)
-                        story.append(Spacer(1, 12))
-            
-            # 添加发展建议
-            if st.session_state.final_result:
-                story.append(Paragraph("发展建议", styles['Heading1']))
-                story.append(Spacer(1, 12))
-                story.append(Paragraph(st.session_state.final_result, styles['Chinese']))
+            # 添加图表
+            for fig_name, fig in st.session_state.report_content['figures'].items():
+                with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
+                    fig.write_image(tmp_file.name)
+                    img = Image(tmp_file.name, width=450, height=300)
+                    story.append(img)
+                    story.append(Spacer(1, 12))
             
             # 生成PDF
             doc.build(story)
             
             # 准备下载
-            pdf_buffer.seek(0)
+            buffer.seek(0)
             filename = f"六页纸领导力测评-{st.session_state.user}-{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
             
             # 触发下载
             st.download_button(
                 label="💾 保存PDF报告",
-                data=pdf_buffer,
+                data=buffer,
                 file_name=filename,
                 mime="application/pdf",
                 key="save_report"
             )
             
+            add_log("info", "PDF报告生成完成")
+            
         except Exception as e:
-            st.error(f"生成PDF报告失败: {str(e)}")
-            add_log("error", f"生成PDF报告失败: {str(e)}")
+            error_msg = f"生成PDF报告失败: {str(e)}"
+            st.error(error_msg)
+            add_log("error", f"{error_msg}\n{traceback.format_exc()}")

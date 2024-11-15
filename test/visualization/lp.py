@@ -10,8 +10,8 @@ class LeadershipVisualizer:
         self.colors = {
             'text': 'rgb(240, 240, 240)',      # 浅色文字
             'background': 'rgb(25, 25, 35)',    # 深色背景
-            'grid': 'rgba(255, 255, 255, 0.1)', # 网格线
-            'polar_bg': 'rgb(240, 240, 245)'    # 圆盘背景色（浅灰白色）
+            'grid': 'rgba(255, 255, 255, 0.15)', # 网格线（增加不透明度）
+            'polar_bg': 'rgb(45, 45, 60)'      # 圆盘背景色（调整为更深的蓝灰色）
         }
     
     def create_rose_chart(self, scores_data: List[Tuple[str, float]]) -> go.Figure:

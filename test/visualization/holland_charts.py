@@ -74,7 +74,11 @@ class HollandVisualizer:
             # 计算线条粗细（基于两个类型的得分和关联度）
             score1 = holland_scores[type1]
             score2 = holland_scores[type2]
-            line_width = (((score1 + score2) / 20) * relation) * 6  # 增加线条粗细
+            # 增加基础粗细并调整计算公式
+            base_width = 3  # 基础线宽
+            score_factor = ((score1 + score2) / 20)  # 得分因子
+            relation_factor = relation ** 0.5  # 关联度因子（开平方使差异更明显）
+            line_width = base_width + (score_factor * relation_factor * 8)  # 增加最大线宽
             
             # 添加连接线
             fig.add_trace(go.Scatter(
@@ -83,7 +87,7 @@ class HollandVisualizer:
                 mode='lines',
                 line=dict(
                     width=line_width,
-                    color='rgba(200,200,200,0.25)'  # 降低线条不透明度
+                    color='rgba(200,200,200,0.35)'  # 增加不透明度
                 ),
                 hoverinfo='skip'
             ))
