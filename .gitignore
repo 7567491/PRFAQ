@@ -54,3 +54,8 @@ config.py
 # 凭证文件
 .credentials.json
 db/users.db
+
+# 数据库备份
+db/backup/
+db/backup/**/*
+db/backup/db.json
