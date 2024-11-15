@@ -90,7 +90,7 @@ def analyze_big5(scores):
         },
         '情绪稳定性': {
             'high': '情绪稳定，能很好地控制压力和焦虑。在面对挑战时保持冷静。',
-            'low': '情感丰富，对环境变化比较敏感。���围的细微变化有敏锐感知。'
+            'low': '情感丰富，对环境变化比较敏感。围的细微变化有敏锐感知。'
         }
     }
     
@@ -629,7 +629,7 @@ class ReportDisplayer:
 三、职业建议：
 {career_suggestions}
 
-基于以上全面的测评结果，请提供一份不超过100字的综合分析和发展建议，内容应包括：
+基于以上全面的测评结果，请提供一份不超过1000字的综合分析和发展建议，内容应包括：
 1. 结合所有测评维度，分析此人的核心优势和潜在挑战
 2. 基于领导力准则评估结果，就如何发挥优势、提升短板给出具体建议
 3. 结合个性特征和职业兴趣，为其领导力发展路径提供长期规划建议
@@ -694,15 +694,50 @@ class ReportDisplayer:
                 bottomMargin=30
             )
             
+            # 注册中文字体
+            try:
+                from reportlab.pdfbase import pdfmetrics
+                from reportlab.pdfbase.ttfonts import TTFont
+                
+                # 尝试加载不同路径的中文字体
+                font_paths = [
+                    ('SimSun', 'C:/Windows/Fonts/simsun.ttc'),  # Windows
+                    ('SimSun', '/usr/share/fonts/truetype/arphic/uming.ttc'),  # Linux
+                    ('SimSun', '/System/Library/Fonts/PingFang.ttc'),  # macOS
+                ]
+                
+                font_loaded = False
+                for font_name, font_path in font_paths:
+                    try:
+                        pdfmetrics.registerFont(TTFont(font_name, font_path))
+                        font_loaded = True
+                        add_log("info", f"成功加载字体: {font_path}")
+                        break
+                    except:
+                        continue
+                
+                if not font_loaded:
+                    add_log("warning", "无法加载中文字体，将使用默认字体")
+            except Exception as e:
+                add_log("warning", f"注册字体失败: {str(e)}")
+            
             # 创建样式
             styles = getSampleStyleSheet()
             styles.add(ParagraphStyle(
                 name='Chinese',
-                fontName='Helvetica',
+                fontName='SimSun' if font_loaded else 'Helvetica',
                 fontSize=10,
                 leading=14,
-                spaceAfter=10
+                spaceAfter=10,
+                wordWrap='CJK'  # 支持中文换行
             ))
+            
+            # 修改标题样式以支持中文
+            styles['Title'].fontName = 'SimSun' if font_loaded else 'Helvetica'
+            styles['Heading1'].fontName = 'SimSun' if font_loaded else 'Helvetica'
+            styles['Heading2'].fontName = 'SimSun' if font_loaded else 'Helvetica'
+            styles['Heading3'].fontName = 'SimSun' if font_loaded else 'Helvetica'
+            styles['Normal'].fontName = 'SimSun' if font_loaded else 'Helvetica'
             
             # 准备内容
             story = []
