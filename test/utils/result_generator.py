@@ -645,7 +645,7 @@ class ReportDisplayer:
             # 调用API获取建议
             api_client = APIClient(config)
             
-            # 使用 placeholder 显示生成过程
+            # 使用 placeholder ��示生成过程
             with st.empty():
                 st.subheader("综合分析与发展建议")
                 full_response = ""
@@ -839,7 +839,8 @@ class ReportDisplayer:
             buffer.close()
             
             # 生成文件名
-            filename = f"六页纸领导力测评-{st.session_state.user}-{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            current_time = datetime.now()
+            filename = f"六页纸测评-{st.session_state.user}-{current_time.strftime('%Y%m%d-%H%M%S')}.pdf"
             
             # 检查PDF大小
             if len(pdf_data) == 0:
@@ -857,7 +858,7 @@ class ReportDisplayer:
                 key="save_report"
             )
             
-            add_log("info", "PDF报告生成完成")
+            add_log("info", f"PDF报告生成完成，文件名: {filename}")
             
         except Exception as e:
             error_msg = f"生成PDF报告失败: {str(e)}"

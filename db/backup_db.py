@@ -1,57 +1,110 @@
+"""数据库备份模块"""
+import os
+import json
 import shutil
 from datetime import datetime
-import os
+from pathlib import Path
 import sqlite3
-from user.logger import add_log
 
-def verify_database(db_path: str) -> bool:
-    """验证数据库完整性"""
-    try:
-        if not os.path.exists(db_path):
-            add_log("info", "数据库文件不存在，跳过验证")
-            return True  # 如果文件不存在，也返回True，因为这是首次初始化的情况
-            
-        conn = sqlite3.connect(db_path)
-        c = conn.cursor()
+def get_backup_info(db_path: str) -> dict:
+    """获取数据库信息
+    
+    Args:
+        db_path: 数据库文件路径
         
-        # 检查必要的表是否存在
-        required_tables = ['users', 'bills', 'history']
-        for table in required_tables:
-            c.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'")
-            if not c.fetchone():
-                add_log("warning", f"数据库中缺少 {table} 表")
-                return False
+    Returns:
+        包含用户数等信息的字典
+    """
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # 获取用户数
+        cursor.execute("SELECT COUNT(*) FROM users")
+        user_count = cursor.fetchone()[0]
+        
+        # 获取其他统计信息
+        cursor.execute("SELECT COUNT(*) FROM bills")
+        bill_count = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM history")
+        history_count = cursor.fetchone()[0]
         
         conn.close()
-        return True
+        
+        return {
+            "user_count": user_count,
+            "bill_count": bill_count,
+            "history_count": history_count
+        }
     except Exception as e:
-        add_log("error", f"验证数据库时出错: {str(e)}")
-        return False
+        return {
+            "user_count": 0,
+            "bill_count": 0,
+            "history_count": 0,
+            "error": str(e)
+        }
 
-def backup_database() -> bool:
-    """备份数据库"""
+def backup_database(reason: str = "manual", operator: str = "system") -> bool:
+    """备份数据库
+    
+    Args:
+        reason: 备份原因 (manual/auto/upgrade)
+        operator: 操作者
+        
+    Returns:
+        是否成功
+    """
     try:
-        # 创建备份目录
-        backup_dir = 'db/backups'
-        if not os.path.exists(backup_dir):
-            os.makedirs(backup_dir)
+        # 确保备份目录存在
+        backup_root = Path("db/backup")
+        backup_root.mkdir(parents=True, exist_ok=True)
         
-        # 检查源数据库是否存在
-        if not os.path.exists('db/users.db'):
-            add_log("info", "数据库文件不存在，跳过备份")
-            return True
+        # 创建子目录
+        (backup_root / "auto").mkdir(exist_ok=True)
+        (backup_root / "manual").mkdir(exist_ok=True)
+        (backup_root / "upgrade").mkdir(exist_ok=True)
         
-        # 生成备份文件名并复制
+        # 确定备份文件名和路径
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        backup_path = f'{backup_dir}/users_{timestamp}.db'
+        backup_name = f"{timestamp}_{reason}.db"
+        backup_dir = backup_root / reason
+        backup_path = backup_dir / backup_name
+        
+        # 复制数据库文件
         shutil.copy2('db/users.db', backup_path)
         
-        add_log("info", f"数据库已备份: {backup_path}")
+        # 获取数据库信息
+        db_info = get_backup_info(str(backup_path))
+        
+        # 更新备份记录
+        backup_json = backup_root / "db.json"
+        if backup_json.exists():
+            with open(backup_json, 'r', encoding='utf-8') as f:
+                backups = json.load(f)
+        else:
+            backups = []
+            
+        # 添加新的备份记录
+        backups.append({
+            "filename": backup_name,
+            "path": str(backup_path),
+            "timestamp": timestamp,
+            "datetime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "reason": reason,
+            "operator": operator,
+            "user_count": db_info["user_count"],
+            "bill_count": db_info["bill_count"],
+            "history_count": db_info["history_count"],
+            "file_size": os.path.getsize(backup_path)
+        })
+        
+        # 保存备份记录
+        with open(backup_json, 'w', encoding='utf-8') as f:
+            json.dump(backups, f, ensure_ascii=False, indent=2)
+            
         return True
         
     except Exception as e:
-        add_log("error", f"备份失败: {str(e)}")
-        return False
-
-if __name__ == "__main__":
-    backup_database() 
+        print(f"备份失败: {str(e)}")
+        return False 

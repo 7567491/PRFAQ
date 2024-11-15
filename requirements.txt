@@ -62,3 +62,9 @@ anthropic>=0.3.11
 
 # 日志和工具
 python-dotenv>=1.0.0
+
+# 定时任务
+schedule>=1.2.0
+
+# 文件大小格式化
+humanize>=4.7.0
