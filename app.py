@@ -101,100 +101,7 @@ def main():
             st.session_state.logs = []
             
         # 创建侧边栏
-        with st.sidebar:
-            # 添加logo（带错误处理）
-            try:
-                st.image("assets/logo.png")
-            except Exception as e:
-                st.warning("Logo图片未找到")
-                add_log("warning", "Logo图片未找到，请确保assets/logo.png存在")
-            
-            st.title(f"助你高效 - {st.session_state.user}")
-            
-            # 显示用户积分
-            user_mgr = UserManager()
-            bill_mgr = BillManager()
-            user_info = user_mgr.get_user_info(st.session_state.user)
-            if user_info:
-                points_info = bill_mgr.get_user_points(user_info['user_id'])
-                st.metric("当前积分", f"{points_info:,}")
-            
-            # 如果是管理员，显示管理员功能
-            if st.session_state.user_role == 'admin':
-                st.header("管理员功能")
-                
-                if st.button("👥 用户管理", use_container_width=True):
-                    clear_main_content()
-                    st.session_state.current_section = 'admin'
-                    add_log("info", "进入用户管理面板")
-                
-                if st.button("🗄️ 数据库管理", use_container_width=True):
-                    clear_main_content()
-                    st.session_state.current_section = 'db_admin'
-                    add_log("info", "进入数据库管理面板")
-                
-                if st.button("🧪 AI聊天测试", use_container_width=True):
-                    clear_main_content()
-                    st.session_state.current_section = 'chat_test'
-                    add_log("info", "进入AI聊天测试")
-            
-            # 主要功能按钮
-            st.header("主要功能")
-            
-            if st.button("🎯 领导力测评", use_container_width=True):
-                clear_main_content()
-                st.session_state.current_section = 'career_test'
-                add_log("info", "进入领导力测评")
-
-            if st.button("📰 逆向工作法", use_container_width=True):
-                clear_main_content()
-                st.session_state.current_section = 'pr'
-                add_log("info", "切换到逆向工作法模式")
-            
-            if st.button("📊 复盘六步法", use_container_width=True):
-                clear_main_content()
-                st.session_state.current_section = 'aar'
-                add_log("info", "切换到复盘六步法模式")
-            
-            # 功能块按钮
-            st.header("功能模块")
-            
-            if st.button("❓ 客户 FAQ", use_container_width=True):
-                clear_main_content()
-                st.session_state.current_section = 'faq'
-                add_log("info", "切换到客户FAQ模式")
-            
-            if st.button("📋 内部 FAQ", use_container_width=True):
-                clear_main_content()
-                st.session_state.current_section = 'internal_faq'
-                add_log("info", "切换到内部FAQ模式")
-            
-            if st.button("🚀 MLP开发", use_container_width=True):
-                clear_main_content()
-                st.session_state.current_section = 'mlp'
-                add_log("info", "切换到MLP开发模式")
-            
-            if st.button("✨ PRFAQ一键生成", use_container_width=True):
-                clear_main_content()
-                st.session_state.current_section = 'all_in_one'
-                add_log("info", "切换到PRFAQ一键生成模式")
-            
-            # 系统功能按钮
-            st.header("系统功能")
-            
-            if st.button("📜 历史查看", use_container_width=True):
-                clear_main_content()
-                st.session_state.current_section = 'history'
-                add_log("info", "进入历史记录查看")
-            
-            if st.button("💰 积分明细", use_container_width=True):
-                clear_main_content()
-                st.session_state.current_section = 'bill'
-                add_log("info", "查看积分明细")
-            
-            # 退出登录按钮
-            if st.button("🚪 退出登录", use_container_width=True):
-                handle_logout()
+        render_sidebar()
         
         # 根据用户色决定布局
         if st.session_state.user_role == 'admin':
@@ -221,6 +128,132 @@ def main():
         add_log("error", error_msg)
         st.error(error_msg)
         st.error("请检查配置文件是否正确，或联系管理员")
+
+def render_sidebar():
+    """渲染侧边栏"""
+    with st.sidebar:
+        # 添加自定义CSS样式
+        st.markdown("""
+        <style>
+            /* 所有侧边栏按钮的基础样式 */
+            .stButton > button {
+                width: 100%;
+                color: white !important;
+                border: 2px solid #ffd700 !important;
+                background-color: transparent !important;
+                margin: 5px 0;
+                transition: all 0.3s ease;
+            }
+            
+            /* 鼠标悬停效果 */
+            .stButton > button:hover {
+                color: black !important;
+                background-color: #ffd700 !important;
+                border-color: #ffd700 !important;
+            }
+            
+            /* 确保激活状态也保持相同样式 */
+            .stButton > button:active, .stButton > button:focus {
+                color: white !important;
+                background-color: transparent !important;
+                border-color: #ffd700 !important;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # 添加logo（带错误处理）
+        try:
+            st.image("assets/logo.png")
+        except Exception as e:
+            st.warning("Logo图片未找到")
+            add_log("warning", "Logo图片未找到，请确保assets/logo.png存在")
+        
+        st.title(f"助你高效 - {st.session_state.user}")
+        
+        # 显示用户积分
+        user_mgr = UserManager()
+        bill_mgr = BillManager()
+        user_info = user_mgr.get_user_info(st.session_state.user)
+        if user_info:
+            points_info = bill_mgr.get_user_points(user_info['user_id'])
+            st.metric("当前积分", f"{points_info:,}")
+        
+        # 如果是管理员，显示管理员功能
+        if st.session_state.user_role == 'admin':
+            st.header("管理员功能")
+            
+            if st.button("👥 用户管理", use_container_width=True):
+                clear_main_content()
+                st.session_state.current_section = 'admin'
+                add_log("info", "进入用户管理面板")
+            
+            if st.button("🗄️ 数据库管理", use_container_width=True):
+                clear_main_content()
+                st.session_state.current_section = 'db_admin'
+                add_log("info", "进入数据库管理面板")
+            
+            if st.button("🧪 AI聊天测试", use_container_width=True):
+                clear_main_content()
+                st.session_state.current_section = 'chat_test'
+                add_log("info", "进入AI聊天测试")
+        
+        # 主要功能按钮
+        st.header("主要功能")
+        
+        if st.button("🎯 领导力测评", use_container_width=True):
+            clear_main_content()
+            st.session_state.current_section = 'career_test'
+            add_log("info", "进入领导力测评")
+
+        if st.button("📰 逆向工作法", use_container_width=True):
+            clear_main_content()
+            st.session_state.current_section = 'pr'
+            add_log("info", "切换到逆向工作法模式")
+        
+        if st.button("📊 复盘六步法", use_container_width=True):
+            clear_main_content()
+            st.session_state.current_section = 'aar'
+            add_log("info", "切换到复盘六步法模式")
+        
+        # 功能块按钮
+        st.header("功能模块")
+        
+        if st.button("❓ 客户 FAQ", use_container_width=True):
+            clear_main_content()
+            st.session_state.current_section = 'faq'
+            add_log("info", "切换到客户FAQ模式")
+        
+        if st.button("📋 内部 FAQ", use_container_width=True):
+            clear_main_content()
+            st.session_state.current_section = 'internal_faq'
+            add_log("info", "切换到内部FAQ模式")
+        
+        if st.button("🚀 MLP开发", use_container_width=True):
+            clear_main_content()
+            st.session_state.current_section = 'mlp'
+            add_log("info", "切换到MLP开发模式")
+        
+        if st.button("✨ PRFAQ一键生成", use_container_width=True):
+            clear_main_content()
+            st.session_state.current_section = 'all_in_one'
+            add_log("info", "切换到PRFAQ一键生成模式")
+        
+        # 系统功能按钮
+        st.header("系统功能")
+        
+        if st.button("📜 历史查看", use_container_width=True):
+            clear_main_content()
+            st.session_state.current_section = 'history'
+            add_log("info", "进入历史记录查看")
+        
+        if st.button("💰 积分明细", use_container_width=True):
+            clear_main_content()
+            st.session_state.current_section = 'bill'
+            add_log("info", "查看积分明细")
+        
+        # 退出登录按钮
+        if st.button("🚪 退出登录", use_container_width=True):
+            handle_logout()
 
 def render_main_content(config, templates):
     """渲染主要内容区域"""

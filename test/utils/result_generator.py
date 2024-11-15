@@ -90,7 +90,7 @@ def analyze_big5(scores):
         },
         '情绪稳定性': {
             'high': '情绪稳定，能很好地控制压力和焦虑。在面对挑战时保持冷静。',
-            'low': '情感丰富，对环境变化比较敏感。周围的细微变化有敏锐感知。'
+            'low': '情感丰富，对环境变化比较敏感。���围的细微变化有敏锐感知。'
         }
     }
     
@@ -339,7 +339,7 @@ def generate_report(results):
                     'improvements': '短期内建议重点提升：\n- 团队协作能力\n- 沟通表达技巧\n- 项目管理能力'
                 },
                 'long_term': {
-                    'career_path': '建议的职业发展路径：\n1. 初期专注于技术能力的提升\n2. 逐步承担项目管理责\n3. 未来可以向技术总监方向发展',
+                    'career_path': '建议的职业发展路径：\n1. 初期专注于技术能力的提升\n2. 逐步承担项目管理\n3. 未来可以向技术总监方向发展',
                     'leadership': '领导力发展建议：\n1. 主动参与跨部门项目\n2. 培养团队管理能力\n3. 提升决策和判断能力'
                 }
             }
@@ -464,7 +464,7 @@ class ReportDisplayer:
             st.write("""
             仪表盘显示分数（0-100）表示偏好方向：50分以偏向左侧特质（E/S/T/J），50分以下偏向右侧特质（I/N/F/P）。
             
-            偏好强度（0-20）表特质倾向的程度：0-5为轻微，6-10为中等，11-15为明显，16-20为强烈。
+            偏好强度（0-20）表特倾向的程度：0-5为轻微，6-10为中等，11-15为明显，16-20为强烈。
             """)
             
             st.divider()
@@ -562,7 +562,7 @@ class ReportDisplayer:
         )
 
     def display_development_suggestions(self, report):
-        """显示发展建议"""
+        """示发展建议"""
         try:
             # 如果已经有生成的建议，直接显示
             if hasattr(st.session_state, 'final_result') and st.session_state.final_result:
@@ -669,26 +669,18 @@ class ReportDisplayer:
         try:
             add_log("info", "开始生成PDF报告")
             
+            # 显示进度条
+            progress_bar = st.progress(0, text="准备生成报告...")
+            
             # 检查是否已有生成的建议
             if not hasattr(st.session_state, 'final_result') or not st.session_state.final_result:
                 st.error("请先生成发展建议")
                 add_log("error", "缺少发展建议内容")
                 return
             
-            # 使用reportlab替代fpdf
-            try:
-                from reportlab.lib import colors
-                from reportlab.lib.pagesizes import A4
-                from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
-                from reportlab.pdfbase import pdfmetrics
-                from reportlab.pdfbase.ttfonts import TTFont
-                import io
-            except ImportError:
-                st.error("请先安装 reportlab 库: pip install reportlab")
-                add_log("error", "缺少 reportlab 库，无法生成 PDF 报告")
-                return
-
+            # 生成PDF
+            progress_bar.progress(30, text="生成PDF文件...")
+            
             # 创建PDF缓冲区
             buffer = io.BytesIO()
             
@@ -706,58 +698,125 @@ class ReportDisplayer:
             styles = getSampleStyleSheet()
             styles.add(ParagraphStyle(
                 name='Chinese',
-                fontName='Helvetica',  # 使用默认字体
+                fontName='Helvetica',
                 fontSize=10,
-                leading=14
+                leading=14,
+                spaceAfter=10
             ))
             
             # 准备内容
             story = []
             
-            # 添加标题
+            # 添加标题和基本信息
             story.append(Paragraph(
-                f"六页纸领导力测评报告 - {st.session_state.user}",
+                f"六页纸领导力测评报告",
                 styles['Title']
             ))
-            
-            # 添加时间
+            story.append(Spacer(1, 20))
+            story.append(Paragraph(
+                f"用户：{st.session_state.user}",
+                styles['Normal']
+            ))
             story.append(Paragraph(
                 f"生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
                 styles['Normal']
             ))
-            story.append(Spacer(1, 12))
+            story.append(Spacer(1, 30))
             
-            # 添加报告内容
-            for line in st.session_state.report_content['text']:
-                if line.startswith('# '):
-                    story.append(Paragraph(line[2:], styles['Title']))
-                elif line.startswith('## '):
-                    story.append(Paragraph(line[3:], styles['Heading1']))
-                elif line.startswith('### '):
-                    story.append(Paragraph(line[4:], styles['Heading2']))
-                else:
-                    story.append(Paragraph(line, styles['Chinese']))
-                story.append(Spacer(1, 6))
+            progress_bar.progress(50, text="添加报告内容...")
             
-            # 添加图表
-            for fig_name, fig in st.session_state.report_content['figures'].items():
-                with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
-                    fig.write_image(tmp_file.name)
-                    img = Image(tmp_file.name, width=450, height=300)
-                    story.append(img)
-                    story.append(Spacer(1, 12))
+            # 添加大五人格分析
+            story.append(Paragraph("一、大五人格分析", styles['Heading1']))
+            story.append(Spacer(1, 10))
+            for trait, data in report['personality_traits']['big5'].items():
+                score = data['score']
+                level = "高" if score >= 7 else "中" if score >= 4 else "低"
+                story.append(Paragraph(
+                    f"{trait}（得分：{score:.1f}，水平：{level}）",
+                    styles['Heading2']
+                ))
+                story.append(Paragraph(data['interpretation'], styles['Normal']))
+                story.append(Spacer(1, 10))
+            
+            # 添加MBTI分析
+            story.append(Paragraph("二、MBTI性格类型分析", styles['Heading1']))
+            story.append(Spacer(1, 10))
+            mbti_data = report['personality_traits']['mbti']
+            story.append(Paragraph(f"您的MBTI类型是：{mbti_data['type']}", styles['Heading2']))
+            story.append(Paragraph(mbti_data['description'], styles['Normal']))
+            story.append(Spacer(1, 10))
+            
+            # 添加维度偏好强度
+            story.append(Paragraph("维度偏好强度：", styles['Heading2']))
+            for dim, strength in report.get('mbti_metadata', {}).get('preference_strengths', {}).items():
+                story.append(Paragraph(f"{dim}: {strength:.1f}", styles['Normal']))
+            story.append(Spacer(1, 20))
+            
+            progress_bar.progress(70, text="添加分析结果...")
+            
+            # 添加霍兰德职业兴趣分析
+            story.append(Paragraph("三、霍兰德职业兴趣分析", styles['Heading1']))
+            story.append(Spacer(1, 10))
+            holland_data = report['personality_traits']['holland']
+            story.append(Paragraph(f"主导类型：{holland_data['primary']['title']}", styles['Heading2']))
+            story.append(Paragraph(holland_data['primary']['description'], styles['Normal']))
+            story.append(Paragraph(f"次要类型：{holland_data['secondary']['title']}", styles['Heading2']))
+            story.append(Paragraph(holland_data['secondary']['description'], styles['Normal']))
+            story.append(Spacer(1, 20))
+            
+            # 添加领导力准则分析
+            story.append(Paragraph("四、领导力准则分析", styles['Heading1']))
+            story.append(Spacer(1, 10))
+            
+            # 优势准则
+            story.append(Paragraph("优势准则：", styles['Heading2']))
+            for analysis in report['leadership_analysis']['top_analysis']:
+                story.append(Paragraph(
+                    f"{analysis['name']}（得分：{analysis['score']:.1f}）",
+                    styles['Heading3']
+                ))
+                story.append(Paragraph(analysis['description'], styles['Normal']))
+            story.append(Spacer(1, 10))
+            
+            # 待提升准则
+            story.append(Paragraph("待提升准则：", styles['Heading2']))
+            for analysis in report['leadership_analysis']['bottom_analysis']:
+                story.append(Paragraph(
+                    f"{analysis['name']}（得分：{analysis['score']:.1f}）",
+                    styles['Heading3']
+                ))
+                story.append(Paragraph(analysis['description'], styles['Normal']))
+            story.append(Spacer(1, 20))
+            
+            progress_bar.progress(90, text="添加发展建议...")
+            
+            # 添加发展建议
+            story.append(Paragraph("五、综合分析与发展建议", styles['Heading1']))
+            story.append(Spacer(1, 10))
+            story.append(Paragraph(st.session_state.final_result, styles['Normal']))
             
             # 生成PDF
+            progress_bar.progress(95, text="完成PDF生成...")
             doc.build(story)
             
-            # 准备下载
-            buffer.seek(0)
+            # 获取生成的PDF内容
+            pdf_data = buffer.getvalue()
+            buffer.close()
+            
+            # 生成文件名
             filename = f"六页纸领导力测评-{st.session_state.user}-{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
             
+            # 检查PDF大小
+            if len(pdf_data) == 0:
+                raise ValueError("生成的PDF文件大小为0")
+            
+            add_log("info", f"PDF生成完成，文件大小: {len(pdf_data)} bytes")
+            
             # 触发下载
+            progress_bar.progress(100, text="报告生成完成！")
             st.download_button(
                 label="💾 保存PDF报告",
-                data=buffer,
+                data=pdf_data,
                 file_name=filename,
                 mime="application/pdf",
                 key="save_report"
@@ -769,3 +828,5 @@ class ReportDisplayer:
             error_msg = f"生成PDF报告失败: {str(e)}"
             st.error(error_msg)
             add_log("error", f"{error_msg}\n{traceback.format_exc()}")
+            if 'progress_bar' in locals():
+                progress_bar.progress(100, text="报告生成失败！")
