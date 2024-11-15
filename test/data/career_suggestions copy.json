@@ -1,0 +1,154 @@
+{
+  "career_paths": {
+    "research": {
+      "title": "研究型职业",
+      "matching_dimensions": {
+        "mbti": ["I", "N", "T"],
+        "big5": ["O", "C"],
+        "holland": ["I", "R"]
+      },
+      "positions": [
+        {
+          "name": "数据科学家",
+          "strengths": ["刨根问底", "创新简化"],
+          "improvements": ["顾客至上"]
+        },
+        {
+          "name": "研发工程师",
+          "strengths": ["好学求知", "最高标准"],
+          "improvements": ["选贤育能"]
+        },
+        {
+          "name": "算法专家",
+          "strengths": ["创新简化", "决策正确"],
+          "improvements": ["赢得信任"]
+        }
+      ]
+    },
+    "management": {
+      "title": "管理型职业",
+      "matching_dimensions": {
+        "mbti": ["E", "J"],
+        "big5": ["E", "C"],
+        "holland": ["E", "S"]
+      },
+      "positions": [
+        {
+          "name": "项目经理",
+          "strengths": ["达成业绩", "主人翁精神"],
+          "improvements": ["创新简化"]
+        },
+        {
+          "name": "人力资源总监",
+          "strengths": ["选贤育能", "赢得信任"],
+          "improvements": ["决策正确"]
+        },
+        {
+          "name": "运营总监",
+          "strengths": ["远见卓识", "崇尚行动"],
+          "improvements": ["刨根问底"]
+        }
+      ]
+    },
+    "creative": {
+      "title": "创意型职业",
+      "matching_dimensions": {
+        "mbti": ["N", "P"],
+        "big5": ["O", "E"],
+        "holland": ["A", "I"]
+      },
+      "positions": [
+        {
+          "name": "产品设计师",
+          "strengths": ["创新简化", "顾客至上"],
+          "improvements": ["最高标准"]
+        },
+        {
+          "name": "用户体验设计师",
+          "strengths": ["好学求知", "创新简化"],
+          "improvements": ["达成业绩"]
+        },
+        {
+          "name": "创意总监",
+          "strengths": ["远见卓识", "创新简化"],
+          "improvements": ["勤俭节约"]
+        }
+      ]
+    },
+    "service": {
+      "title": "服务型职业",
+      "matching_dimensions": {
+        "mbti": ["E", "F"],
+        "big5": ["A", "E"],
+        "holland": ["S", "E"]
+      },
+      "positions": [
+        {
+          "name": "客户服务经理",
+          "strengths": ["顾客至上", "赢得信任"],
+          "improvements": ["决策正确"]
+        },
+        {
+          "name": "培训讲师",
+          "strengths": ["选贤育能", "好学求知"],
+          "improvements": ["刨根问底"]
+        },
+        {
+          "name": "公共关系总监",
+          "strengths": ["赢得信任", "远见卓识"],
+          "improvements": ["勤俭节约"]
+        }
+      ]
+    },
+    "technical": {
+      "title": "技术型职业",
+      "matching_dimensions": {
+        "mbti": ["I", "T"],
+        "big5": ["C", "O"],
+        "holland": ["R", "I"]
+      },
+      "positions": [
+        {
+          "name": "软件架构师",
+          "strengths": ["创新简化", "最高标准"],
+          "improvements": ["选贤育能"]
+        },
+        {
+          "name": "技术专家",
+          "strengths": ["刨根问底", "好学求知"],
+          "improvements": ["顾客至上"]
+        },
+        {
+          "name": "系统分析师",
+          "strengths": ["决策正确", "远见卓识"],
+          "improvements": ["赢得信任"]
+        }
+      ]
+    },
+    "analytical": {
+      "title": "分析型职业",
+      "matching_dimensions": {
+        "mbti": ["I", "T"],
+        "big5": ["C", "N"],
+        "holland": ["I", "C"]
+      },
+      "positions": [
+        {
+          "name": "商业分析师",
+          "strengths": ["刨根问底", "决策正确"],
+          "improvements": ["崇尚行动"]
+        },
+        {
+          "name": "风险控制专家",
+          "strengths": ["最高标准", "勤俭节约"],
+          "improvements": ["创新简化"]
+        },
+        {
+          "name": "投资顾问",
+          "strengths": ["远见卓识", "决策正确"],
+          "improvements": ["顾客至上"]
+        }
+      ]
+    }
+  }
+} 
