@@ -20,6 +20,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from fpdf import FPDF
+import os
 
 def load_data():
     """加载所有必要的数据文件"""
@@ -64,7 +65,7 @@ def analyze_big5(scores):
     """分析大五人格结果"""
     # 维度映射表（使用中文键名）
     trait_names = {
-        '开放性': '开放性',
+        '开放性': '开放',
         '尽责性': '尽责性',
         '外向性': '外向性',
         '宜人性': '宜人性',
@@ -89,8 +90,8 @@ def analyze_big5(scores):
             'low': '独立自主，直言不讳，注重实事求是。在决策时更看重客观事实。'
         },
         '情绪稳定性': {
-            'high': '情绪稳定，能很好地控制压力和焦虑。在面对挑战时保持冷静。',
-            'low': '情感丰富，对环境变化比较敏感。围的细微变化有敏锐感知。'
+            'high': '情绪稳定，能很好地控制压力和虑。在面对挑战时持冷静。',
+            'low': '情感丰富，对环境变化比较敏感。对细微变化有敏锐感知。'
         }
     }
     
@@ -464,7 +465,7 @@ class ReportDisplayer:
             st.write("""
             仪表盘显示分数（0-100）表示偏好方向：50分以偏向左侧特质（E/S/T/J），50分以下偏向右侧特质（I/N/F/P）。
             
-            偏好强度（0-20）表特倾向的程度：0-5为轻微，6-10为中等，11-15为明显，16-20为强烈。
+            偏好强0-20）表特倾向的程0-5为轻微，6-10为中等，11-15为明显，16-20为强烈。
             """)
             
             st.divider()
@@ -562,12 +563,12 @@ class ReportDisplayer:
         )
 
     def display_development_suggestions(self, report):
-        """示发展建议"""
+        """显示发展建议"""
         try:
             # 如果已经有生成的建议，直接显示
             if hasattr(st.session_state, 'final_result') and st.session_state.final_result:
                 st.subheader("综合分析与发展建议")
-                st.write(st.session_state.final_result)
+                st.write(st.session_state.final_result)  # 直接显示完整文本
                 return
             
             # 否则生成新的建议
@@ -600,7 +601,7 @@ class ReportDisplayer:
                 for suggestion in report['career_suggestions']
             ])
             
-            # 准备完整提示词
+            # 修改提示词以强调段落格式
             prompt = f"""
 作为一位资深的职业发展顾问，请根据以下详细的测评结果，为这位候选人提供一份全面的领导力发展建议。
 
@@ -629,15 +630,25 @@ class ReportDisplayer:
 三、职业建议：
 {career_suggestions}
 
-基于以上全面的测评结果，请提供一份不超过1000字的综合分析和发展建议，内容应包括：
-1. 结合所有测评维度，分析此人的核心优势和潜在挑战
-2. 基于领导力准则评估结果，就如何发挥优势、提升短板给出具体建议
-3. 结合个性特征和职业兴趣，为其领导力发展路径提供长期规划建议
+请提供一份不超过100字的综合分析和发展建议，要求：
+
+1. 内容结构：
+- 开篇总述（1段）：概括性描述此人的核心特质和发展潜力
+- 优势分析（1段）：详细分析个人优势及其在领导力方面的积极影响
+- 挑战分析（1段）：指出需要提升的方面及其对领导力发展的影响
+- 发展建议（1段）：具体的提升方向和行动建议
+- 长期规划（1段）：对未来3-5年的发展路径建议
+
+2. 格式要求：
+- 每个段落应该是完整的自然段，使用空行分隔
+- 每段200-300字左右
+- 避免使用分点列举，保持连贯的叙述风格
+- 段落之间要有清晰的逻辑关联
 
 要求：
 1. 使用连贯的段落叙述，避免分点列举
 2. 语言要专业、具体且富有洞察力
-3. 建议要切实可行，并与测评结果紧密关联
+3. 建议要实可行，并与测评结紧密关
 4. 重点关注领导力发展，但也要兼顾个人成长
 5. 建议要具体明确，避免泛泛而谈
 """
@@ -645,29 +656,37 @@ class ReportDisplayer:
             # 调用API获取建议
             api_client = APIClient(config)
             
-            # 使用 placeholder ��示生成过程
-            with st.empty():
-                st.subheader("综合分析与发展建议")
-                full_response = ""
+            # 创建占位符
+            title_placeholder = st.empty()
+            content_placeholder = st.empty()
+            
+            # 显示标题
+            title_placeholder.subheader("综合分析与发展建议")
+            
+            # 用于存储完整响应
+            full_response = ""
+            
+            # 流式显示文本
+            for chunk in api_client.generate_content_stream(prompt, "claude"):
+                if chunk:
+                    full_response += chunk
+                    # 直接更新显示的内容
+                    content_placeholder.markdown(full_response)
+            
+            if full_response:
+                # 保存完整的响应，包括段落格式
+                st.session_state.final_result = full_response
+            else:
+                st.error("生成发展建议时出错")
                 
-                for chunk in api_client.generate_content_stream(prompt, "claude"):
-                    if chunk:
-                        full_response += chunk
-                        st.write(full_response)
-                        
-                if not full_response:
-                    st.error("生成发展建议时出错")
-                else:
-                    st.session_state.final_result = full_response
-                    
         except Exception as e:
             st.error(f"生成发展建议失败: {str(e)}")
             add_log("error", f"生成发展建议失败: {str(e)}")
 
     def export_report(self, report):
-        """导出完整报告为PDF"""
+        """导出完整报告为TXT"""
         try:
-            add_log("info", "开始生成PDF报告")
+            add_log("info", "开始生成TXT报告")
             
             # 显示进度条
             progress_bar = st.progress(0, text="准备生成报告...")
@@ -678,191 +697,114 @@ class ReportDisplayer:
                 add_log("error", "缺少发展建议内容")
                 return
             
-            # 生成PDF
-            progress_bar.progress(30, text="生成PDF文件...")
+            # 生成报告内容
+            progress_bar.progress(30, text="生成报告内容...")
             
-            # 创建PDF缓冲区
-            buffer = io.BytesIO()
-            
-            # 创建PDF文档
-            doc = SimpleDocTemplate(
-                buffer,
-                pagesize=A4,
-                rightMargin=30,
-                leftMargin=30,
-                topMargin=30,
-                bottomMargin=30
-            )
-            
-            # 注册中文字体
             try:
-                from reportlab.pdfbase import pdfmetrics
-                from reportlab.pdfbase.ttfonts import TTFont
+                # 准备报告内容
+                content = []
                 
-                # 尝试加载不同路径的中文字体
-                font_paths = [
-                    ('SimSun', 'C:/Windows/Fonts/simsun.ttc'),  # Windows
-                    ('SimSun', '/usr/share/fonts/truetype/arphic/uming.ttc'),  # Linux
-                    ('SimSun', '/System/Library/Fonts/PingFang.ttc'),  # macOS
-                ]
+                # 添加标题
+                content.append("六页纸领导力测评报告")
+                content.append("=" * 50)
+                content.append("")
                 
-                font_loaded = False
-                for font_name, font_path in font_paths:
-                    try:
-                        pdfmetrics.registerFont(TTFont(font_name, font_path))
-                        font_loaded = True
-                        add_log("info", f"成功加载字体: {font_path}")
-                        break
-                    except:
-                        continue
+                # 添加基本信息
+                content.append(f"用户：{st.session_state.user}")
+                content.append(f"生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                content.append("=" * 50)
+                content.append("")
                 
-                if not font_loaded:
-                    add_log("warning", "无法加载中文字体，将使用默认字体")
+                # 添加大五人格分析
+                content.append("一、大五人格分析")
+                content.append("-" * 30)
+                content.append("")
+                
+                for trait, data in report['personality_traits']['big5'].items():
+                    score = data['score']
+                    level = "高" if score >= 7 else "中" if score >= 4 else "低"
+                    content.append(f"{trait}（得分：{score:.1f}，水平：{level}）")
+                    content.append(data['interpretation'])
+                    content.append("")
+                
+                # 添加MBTI分析
+                content.append("二、MBTI性格类型分析")
+                content.append("-" * 30)
+                content.append("")
+                
+                mbti_data = report['personality_traits']['mbti']
+                content.append(f"您的MBTI类型是：{mbti_data['type']}")
+                content.append(mbti_data['description'])
+                content.append("")
+                
+                # 添加霍兰德职业兴趣分析
+                content.append("三、霍兰德职业兴趣分析")
+                content.append("-" * 30)
+                content.append("")
+                
+                holland_data = report['personality_traits']['holland']
+                content.append(f"主导类型：{holland_data['primary']['title']}")
+                content.append(holland_data['primary']['description'])
+                content.append("")
+                content.append(f"次要类型：{holland_data['secondary']['title']}")
+                content.append(holland_data['secondary']['description'])
+                content.append("")
+                
+                # 添加领导力准则分析
+                content.append("四、领导力准则分析")
+                content.append("-" * 30)
+                content.append("")
+                
+                content.append("优势准则：")
+                for analysis in report['leadership_analysis']['top_analysis']:
+                    content.append(f"{analysis['name']}（得分：{analysis['score']:.1f}）")
+                    content.append(analysis['description'])
+                    content.append("")
+                
+                content.append("待提升准则：")
+                for analysis in report['leadership_analysis']['bottom_analysis']:
+                    content.append(f"{analysis['name']}（得分：{analysis['score']:.1f}）")
+                    content.append(analysis['description'])
+                    content.append("")
+                
+                # 添加发展建议
+                content.append("五、综合分析与发展建议")
+                content.append("-" * 30)
+                content.append("")
+                
+                # 分段处理发展建议
+                paragraphs = st.session_state.final_result.split('\n\n')
+                for paragraph in paragraphs:
+                    if paragraph.strip():
+                        content.append(paragraph.strip())
+                        content.append("")
+                
+                # 生成文本文件
+                report_text = '\n'.join(content)
+                
+                # 生成文件名
+                filename = f"六页纸测评-{st.session_state.user}-{datetime.now().strftime('%Y%m%d-%H%M%S')}.txt"
+                
+                # 提供下载
+                progress_bar.progress(100, text="报告生成完成！")
+                st.download_button(
+                    label="💾 保存TXT报告",
+                    data=report_text.encode('utf-8'),
+                    file_name=filename,
+                    mime="text/plain"
+                )
+                
+                add_log("info", "TXT报告生成成功")
+                
             except Exception as e:
-                add_log("warning", f"注册字体失败: {str(e)}")
-            
-            # 创建样式
-            styles = getSampleStyleSheet()
-            styles.add(ParagraphStyle(
-                name='Chinese',
-                fontName='SimSun' if font_loaded else 'Helvetica',
-                fontSize=10,
-                leading=14,
-                spaceAfter=10,
-                wordWrap='CJK'  # 支持中文换行
-            ))
-            
-            # 修改标题样式以支持中文
-            styles['Title'].fontName = 'SimSun' if font_loaded else 'Helvetica'
-            styles['Heading1'].fontName = 'SimSun' if font_loaded else 'Helvetica'
-            styles['Heading2'].fontName = 'SimSun' if font_loaded else 'Helvetica'
-            styles['Heading3'].fontName = 'SimSun' if font_loaded else 'Helvetica'
-            styles['Normal'].fontName = 'SimSun' if font_loaded else 'Helvetica'
-            
-            # 准备内容
-            story = []
-            
-            # 添加标题和基本信息
-            story.append(Paragraph(
-                f"六页纸领导力测评报告",
-                styles['Title']
-            ))
-            story.append(Spacer(1, 20))
-            story.append(Paragraph(
-                f"用户：{st.session_state.user}",
-                styles['Normal']
-            ))
-            story.append(Paragraph(
-                f"生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-                styles['Normal']
-            ))
-            story.append(Spacer(1, 30))
-            
-            progress_bar.progress(50, text="添加报告内容...")
-            
-            # 添加大五人格分析
-            story.append(Paragraph("一、大五人格分析", styles['Heading1']))
-            story.append(Spacer(1, 10))
-            for trait, data in report['personality_traits']['big5'].items():
-                score = data['score']
-                level = "高" if score >= 7 else "中" if score >= 4 else "低"
-                story.append(Paragraph(
-                    f"{trait}（得分：{score:.1f}，水平：{level}）",
-                    styles['Heading2']
-                ))
-                story.append(Paragraph(data['interpretation'], styles['Normal']))
-                story.append(Spacer(1, 10))
-            
-            # 添加MBTI分析
-            story.append(Paragraph("二、MBTI性格类型分析", styles['Heading1']))
-            story.append(Spacer(1, 10))
-            mbti_data = report['personality_traits']['mbti']
-            story.append(Paragraph(f"您的MBTI类型是：{mbti_data['type']}", styles['Heading2']))
-            story.append(Paragraph(mbti_data['description'], styles['Normal']))
-            story.append(Spacer(1, 10))
-            
-            # 添加维度偏好强度
-            story.append(Paragraph("维度偏好强度：", styles['Heading2']))
-            for dim, strength in report.get('mbti_metadata', {}).get('preference_strengths', {}).items():
-                story.append(Paragraph(f"{dim}: {strength:.1f}", styles['Normal']))
-            story.append(Spacer(1, 20))
-            
-            progress_bar.progress(70, text="添加分析结果...")
-            
-            # 添加霍兰德职业兴趣分析
-            story.append(Paragraph("三、霍兰德职业兴趣分析", styles['Heading1']))
-            story.append(Spacer(1, 10))
-            holland_data = report['personality_traits']['holland']
-            story.append(Paragraph(f"主导类型：{holland_data['primary']['title']}", styles['Heading2']))
-            story.append(Paragraph(holland_data['primary']['description'], styles['Normal']))
-            story.append(Paragraph(f"次要类型：{holland_data['secondary']['title']}", styles['Heading2']))
-            story.append(Paragraph(holland_data['secondary']['description'], styles['Normal']))
-            story.append(Spacer(1, 20))
-            
-            # 添加领导力准则分析
-            story.append(Paragraph("四、领导力准则分析", styles['Heading1']))
-            story.append(Spacer(1, 10))
-            
-            # 优势准则
-            story.append(Paragraph("优势准则：", styles['Heading2']))
-            for analysis in report['leadership_analysis']['top_analysis']:
-                story.append(Paragraph(
-                    f"{analysis['name']}（得分：{analysis['score']:.1f}）",
-                    styles['Heading3']
-                ))
-                story.append(Paragraph(analysis['description'], styles['Normal']))
-            story.append(Spacer(1, 10))
-            
-            # 待提升准则
-            story.append(Paragraph("待提升准则：", styles['Heading2']))
-            for analysis in report['leadership_analysis']['bottom_analysis']:
-                story.append(Paragraph(
-                    f"{analysis['name']}（得分：{analysis['score']:.1f}）",
-                    styles['Heading3']
-                ))
-                story.append(Paragraph(analysis['description'], styles['Normal']))
-            story.append(Spacer(1, 20))
-            
-            progress_bar.progress(90, text="添加发展建议...")
-            
-            # 添加发展建议
-            story.append(Paragraph("五、综合分析与发展建议", styles['Heading1']))
-            story.append(Spacer(1, 10))
-            story.append(Paragraph(st.session_state.final_result, styles['Normal']))
-            
-            # 生成PDF
-            progress_bar.progress(95, text="完成PDF生成...")
-            doc.build(story)
-            
-            # 获取生成的PDF内容
-            pdf_data = buffer.getvalue()
-            buffer.close()
-            
-            # 生成文件名
-            current_time = datetime.now()
-            filename = f"六页纸测评-{st.session_state.user}-{current_time.strftime('%Y%m%d-%H%M%S')}.pdf"
-            
-            # 检查PDF大小
-            if len(pdf_data) == 0:
-                raise ValueError("生成的PDF文件大小为0")
-            
-            add_log("info", f"PDF生成完成，文件大小: {len(pdf_data)} bytes")
-            
-            # 触发下载
-            progress_bar.progress(100, text="报告生成完成！")
-            st.download_button(
-                label="💾 保存PDF报告",
-                data=pdf_data,
-                file_name=filename,
-                mime="application/pdf",
-                key="save_report"
-            )
-            
-            add_log("info", f"PDF报告生成完成，文件名: {filename}")
-            
+                error_msg = f"生成报告内容失败: {str(e)}"
+                st.error(error_msg)
+                add_log("error", error_msg)
+                return
+                
         except Exception as e:
-            error_msg = f"生成PDF报告失败: {str(e)}"
+            error_msg = f"生成报告失败: {str(e)}"
             st.error(error_msg)
-            add_log("error", f"{error_msg}\n{traceback.format_exc()}")
+            add_log("error", error_msg)
             if 'progress_bar' in locals():
                 progress_bar.progress(100, text="报告生成失败！")
