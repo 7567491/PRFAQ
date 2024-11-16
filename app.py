@@ -314,39 +314,36 @@ def render_main_content(config, templates):
                 raise FileNotFoundError("test/data目录不存在")
             add_log("info", f"data目录存在: {data_dir.absolute()}")
             
-            # 检查必要的数据文件
-            required_files = [
-                "personality_questions.json",
-                "leadership_principles.json",
-                "mbti_descriptions.json",
-                "career_suggestions.json"
-            ]
-            for file in required_files:
-                if not (data_dir / file).exists():
-                    raise FileNotFoundError(f"数据文件缺失: {file}")
-                add_log("info", f"数据文件存在: {file}")
-            
             # 尝试导入模块
             add_log("info", "尝试导入CareerTest类...")
-            from test.test import CareerTest
-            add_log("info", "成功导入CareerTest类")
+            try:
+                from test.test import CareerTest
+                add_log("info", "成功导入CareerTest类")
+            except ImportError as e:
+                if "docx" in str(e):
+                    st.error("""
+                    缺少必要的依赖包：python-docx
+                    
+                    请联系管理员安装所需依赖。
+                    """)
+                    add_log("error", "缺少必要的依赖包：python-docx")
+                    return
+                raise
             
             # 初始化测试模块
             career_test = CareerTest()
             add_log("info", "成功初始化CareerTest实例")
             
-            # 渲染测试界面并获取结果
+            # 渲染测试界面
             result = career_test.render()
             
             # 如果测试完成并有结果，保存到历史记录
             if result and 'final_result' in st.session_state:
                 try:
-                    from modules.utils import save_history
-                    # 只保存最终显示的结果文本
                     save_history(
                         st.session_state.user,
                         'leadership_test',
-                        st.session_state.final_result  # 最终显示的结果文本
+                        st.session_state.final_result
                     )
                     add_log("info", "领导力测评结果已保存到历史记录")
                 except Exception as e:
@@ -356,10 +353,6 @@ def render_main_content(config, templates):
             error_msg = f"导入模块失败: {str(e)}\n"
             error_msg += f"Python路径: {sys.path}\n"
             error_msg += f"当前目录: {Path.cwd()}"
-            st.error(error_msg)
-            add_log("error", error_msg)
-        except FileNotFoundError as e:
-            error_msg = f"文件不存在: {str(e)}"
             st.error(error_msg)
             add_log("error", error_msg)
         except Exception as e:

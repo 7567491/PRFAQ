@@ -68,3 +68,6 @@ schedule>=1.2.0
 
 # 文件大小格式化
 humanize>=4.7.0
+
+# Word文档处理
+python-docx==0.8.11
