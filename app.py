@@ -196,6 +196,11 @@ def render_sidebar():
                 clear_main_content()
                 st.session_state.current_section = 'chat_test'
                 add_log("info", "进入AI聊天测试")
+            
+            if st.button("☁️ AWS集成", use_container_width=True):
+                clear_main_content()
+                st.session_state.current_section = 'aws_mp'
+                add_log("info", "进入AWS集成面板")
         
         # 主要功能按钮
         st.header("主要功能")
@@ -261,6 +266,9 @@ def render_main_content(config, templates):
         show_admin_panel()
     elif st.session_state.current_section == 'db_admin':
         show_db_admin()
+    elif st.session_state.current_section == 'aws_mp':
+        from aws.aws_mp import show_aws_panel
+        show_aws_panel()
     elif st.session_state.current_section == 'chat_test':
         api_client = APIClient(config)
         show_chat_interface(api_client)
@@ -337,7 +345,7 @@ def render_main_content(config, templates):
             # 渲染测试界面
             result = career_test.render()
             
-            # 如果测试完成并有结果，保存到历史记录
+            # 如果测试完成并有结果，保存到历史记��
             if result and 'final_result' in st.session_state:
                 try:
                     save_history(
