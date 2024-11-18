@@ -1,32 +1,30 @@
-FROM python:3.12-slim
+FROM python:3.9-slim
 
 WORKDIR /app
+
+# 安装系统依赖
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libffi-dev \
+    libssl-dev \
+    fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安装中文字体支持
+RUN apt-get update && apt-get install -y \
+    fonts-wqy-zenhei \
+    fonts-wqy-microhei \
+    && rm -rf /var/lib/apt/lists/*
 
 # 复制项目文件
 COPY . .
 
-# 设置环境变量
-ENV LANG=zh_CN.UTF-8
-ENV LC_ALL=zh_CN.UTF-8
-ENV PYTHONIOENCODING=utf8
+# 升级pip并安装依赖
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# 安装系统依赖和字体
-RUN apt-get update && apt-get install -y \
-    fonts-wqy-microhei \
-    fonts-wqy-zenhei \
-    xfonts-wqy \
-    fontconfig \
-    locales \
-    locales-all \
-    && locale-gen zh_CN.UTF-8 \
-    && fc-cache -fv \
-    && rm -rf /var/lib/apt/lists/*
+# 暴露端口
+EXPOSE 8501
 
-# 安装Python依赖
-RUN pip install --no-cache-dir -r requirements.txt
-
-# 设置权限
-RUN chmod -R 755 assets/fonts output db
-
-# 启动应用
-CMD ["streamlit", "run", "app.py"] 
+# 启动命令（需要根据你的主程序文件名调整）
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"] 
