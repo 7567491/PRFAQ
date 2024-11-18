@@ -1,0 +1,67 @@
+# PRFAQ Pro 文件架构
+
+## 主程序入口
+app.py                  # 主程序入口，负责界面初始化和路由管理
+
+## 核心功能模块 (/modules)
+/modules
+    __init__.py        # 模块初始化文件
+    pr_generator.py    # 新闻稿生成器
+    faq_generator.py   # FAQ生成器
+    faq_in.py         # 内部FAQ生成器
+    mlp_generator.py   # MLP文档生成器
+    aar_generator.py   # 复盘报告生成器
+    all_in_one_generator.py  # 一键生成器
+    utils.py          # 工具函数
+    api.py            # API客户端
+
+## 数据库管理 (/db)
+/db
+    init_db.py        # 数据库初始化
+    db_admin.py       # 数据库管理界面
+    db_table.py       # 表结构管理
+    read_db.py        # 数据库读取操作
+    backup_db.py      # 数据库备份
+    db_restore.py     # 数据库恢复
+
+## 用户管理 (/user)
+/user
+    user_process.py   # 用户认证和管理
+    admin.py          # 管理员面板
+    bill.py          # 账单管理
+    user.py          # 用户界面
+    logger.py        # 日志管理
+
+## 配置文件
+/.streamlit
+    config.toml      # Streamlit配置文件
+/config
+    letters.json     # 模板配置
+    prfaqs.json      # PRFAQ配置
+.env                 # 环境变量配置
+
+## 遗留文件（建议删除）：
+1. api.txt           # 临时文件，可以删除
+
+## 文件调用关系
+1. app.py 作为主入口：
+   - 调用 modules/ 下的生成器模块
+   - 调用 user/user_process.py 进行用户认证
+   - 调用 db/ 下的数据库操作
+
+2. 数据库操作流：
+   init_db.py -> db_table.py -> read_db.py
+   backup_db.py/db_restore.py (独立的备份恢复功能)
+   
+3. 用户操作流：
+   user_process.py -> admin.py/user.py -> bill.py
+
+4. 生成器调用：
+   all_in_one_generator.py -> 其他具体生成器 -> api.py
+
+## 注意事项
+1. api.txt 是临时文件，可以直接删除
+2. 保持目录结构清晰：
+   - modules/ 存放核心功能
+   - db/ 存放数据库相关
+   - user/ 存放用户管理相关
