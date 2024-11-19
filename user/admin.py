@@ -1,150 +1,148 @@
 import streamlit as st
-from user.user_base import UserManager
-from modules.notifier import send_wecom_message
-from user.analysis import show_user_analytics
-
-def show_user_management():
-    """显示用户管理界面"""
-    st.subheader("用户管理")
-    
-    user_mgr = UserManager()
-    users = user_mgr.list_users()
-    
-    # 添加新用户按钮
-    if st.button("➕ 添加新用户"):
-        st.session_state.show_add_user = True
-    
-    # 添加新用户表单
-    if st.session_state.get('show_add_user', False):
-        with st.form("add_user_form"):
-            st.subheader("添加新用户")
-            new_username = st.text_input("用户名")
-            new_password = st.text_input("密码", type="password")
-            new_role = st.selectbox("角色", ["user", "admin"])
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.form_submit_button("确认添加"):
-                    if new_username and new_password:
-                        success, message = user_mgr.create_user(new_username, new_password, new_role)
-                        if success:
-                            st.success(f"用户 {new_username} 创建成功")
-                            send_wecom_message('action', st.session_state.user,
-                                action="创建新用户",
-                                details=f"创建用户: {new_username}, 角色: {new_role}"
-                            )
-                            st.session_state.show_add_user = False
-                            st.rerun()
-                        else:
-                            st.error(message)
-                    else:
-                        st.error("用户名和密码不能为空")
-            with col2:
-                if st.form_submit_button("取消"):
-                    st.session_state.show_add_user = False
-                    st.rerun()
-    
-    # 显示用户列表
-    if users:
-        # 创建用户数据表格
-        user_data = []
-        for user in users:
-            user_data.append({
-                "ID": user['user_id'],
-                "用户名": user['username'],
-                "角色": user['role'],
-                "状态": "启用" if user['is_active'] else "禁用",
-                "创建时间": user['created_at'],
-                "最后登录": user['last_login'] or "从未登录"
-            })
-        
-        # 使用 st.dataframe 显示用户列表
-        st.dataframe(
-            user_data,
-            column_config={
-                "ID": st.column_config.NumberColumn("ID", width="small"),
-                "用户名": st.column_config.TextColumn("用户名", width="medium"),
-                "角色": st.column_config.TextColumn("角色", width="small"),
-                "状态": st.column_config.TextColumn("状态", width="small"),
-                "创建时间": st.column_config.DatetimeColumn("创建时间", width="medium"),
-                "最后登录": st.column_config.DatetimeColumn("最后登录", width="medium")
-            },
-            hide_index=True,
-            use_container_width=True
-        )
-        
-        # 用户操作部分
-        st.subheader("用户操作")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            selected_user = st.selectbox(
-                "选择用户",
-                [user['username'] for user in users if user['username'] != st.session_state.user]
-            )
-        
-        with col2:
-            action = st.selectbox(
-                "选择操作",
-                ["更改密码", "启用/禁用", "更改角色"]
-            )
-        
-        if st.button("执行操作", use_container_width=True):
-            if action == "更改密码":
-                new_password = st.text_input("新密码", type="password")
-                if new_password:
-                    success, message = user_mgr.change_password(selected_user, new_password)
-                    if success:
-                        st.success(message)
-                        send_wecom_message('action', st.session_state.user,
-                            action="更改用户密码",
-                            details=f"更改用户 {selected_user} 的密码"
-                        )
-                    else:
-                        st.error(message)
-            
-            elif action == "启用/禁用":
-                success, message = user_mgr.toggle_user_status(selected_user)
-                if success:
-                    st.success(message)
-                    send_wecom_message('action', st.session_state.user,
-                        action="更改用户状态",
-                        details=f"更改用户 {selected_user} 的状态: {message}"
-                    )
-                else:
-                    st.error(message)
-            
-            elif action == "更改角色":
-                new_role = st.selectbox("新角色", ["user", "admin"])
-                if st.button("确认更改角色"):
-                    # 这里需要在 UserManager 中添加更改角色的方法
-                    success, message = user_mgr.change_role(selected_user, new_role)
-                    if success:
-                        st.success(message)
-                        send_wecom_message('action', st.session_state.user,
-                            action="更改用户角色",
-                            details=f"更改用户 {selected_user} 的角色为 {new_role}"
-                        )
-                    else:
-                        st.error(message)
-    else:
-        st.info("暂无用户数据")
+import sqlite3
+from datetime import datetime
+from user.user_process import UserManager
+from user.logger import add_log
+from bill.bill import BillManager
 
 def show_admin_panel():
     """显示管理员面板"""
-    st.title("管理员面板")
+    if st.session_state.get('user_role') != 'admin':
+        st.error("无权限访问此页面")
+        return
     
-    # 使用选项卡组织不同功能
-    tab1, tab2 = st.tabs(["用户管理", "数据分析"])
+    st.title("用户管理面板")
     
-    with tab1:
-        # 用户管理功能
-        show_user_management()
+    user_mgr = UserManager()
+    bill_mgr = BillManager()
+    conn = user_mgr.get_db_connection()
+    c = conn.cursor()
     
-    with tab2:
-        # 用户分析功能
-        show_user_analytics()
-
-# 初始化会话状态
-if 'show_add_user' not in st.session_state:
-    st.session_state.show_add_user = False
+    # 获取所有用户信息
+    c.execute('''
+        SELECT user_id, username, email, phone, org_name, role, is_active, 
+               created_at, last_login, total_chars, total_cost,
+               daily_chars_limit, used_chars_today, points
+        FROM users
+        ORDER BY created_at DESC
+    ''')
+    users = c.fetchall()
+    conn.close()
+    
+    # 显示用户列表
+    st.markdown("### 用户列表")
+    for user in users:
+        with st.expander(f"用户: {user[1]} ({user[0]})"):
+            # 基本信息和使用统计
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write("基本信息:")
+                st.write(f"- 邮箱: {user[2] or '未设置'}")
+                st.write(f"- 电话: {user[3] or '未设置'}")
+                st.write(f"- 组织: {user[4] or '未设置'}")
+                st.write(f"- 角色: {user[5]}")
+                st.write(f"- 状态: {'活跃' if user[6] else '禁用'}")
+            
+            with col2:
+                st.write("使用统计:")
+                st.write(f"- 创建时间: {user[7]}")
+                st.write(f"- 最后登录: {user[8] or '从未登录'}")
+                st.write(f"- 总字符数: {user[9]:,}")
+                st.write(f"- 总消费: ¥{user[10]:.4f}")
+                st.write(f"- 每日字符限制: {user[11]:,}")
+                st.write(f"- 今日已用字符: {user[12]:,}")
+                st.write(f"- 当前积分: {user[13]:,}")
+            
+            # 用户管理功能
+            st.markdown("#### 用户管理")
+            col3, col4, col5 = st.columns(3)
+            
+            # 账户状态管理
+            with col3:
+                if st.button(f"{'禁用' if user[6] else '启用'} 用户", key=f"toggle_{user[0]}"):
+                    conn = user_mgr.get_db_connection()
+                    c = conn.cursor()
+                    new_status = 0 if user[6] else 1
+                    c.execute('UPDATE users SET is_active = ? WHERE user_id = ?', 
+                            (new_status, user[0]))
+                    conn.commit()
+                    conn.close()
+                    add_log("info", f"用户 {user[1]} 状态已更新为 {'活跃' if new_status else '禁用'}")
+                    st.rerun()
+            
+            # 密码重置
+            with col4:
+                if st.button("重置密码", key=f"reset_{user[0]}"):
+                    conn = user_mgr.get_db_connection()
+                    c = conn.cursor()
+                    new_password = "Amazon123"  # 默认密码
+                    hashed_password = user_mgr.hash_password(new_password)
+                    c.execute('UPDATE users SET password = ? WHERE user_id = ?', 
+                            (hashed_password, user[0]))
+                    conn.commit()
+                    conn.close()
+                    add_log("info", f"用户 {user[1]} 密码已重置")
+                    st.success(f"密码已重置为: {new_password}")
+            
+            # 字符限制管理
+            with col5:
+                new_limit = st.number_input(
+                    "每日字符限制", 
+                    min_value=0, 
+                    value=user[11],
+                    key=f"limit_{user[0]}"
+                )
+                if st.button("更新限制", key=f"update_limit_{user[0]}"):
+                    conn = user_mgr.get_db_connection()
+                    c = conn.cursor()
+                    c.execute('UPDATE users SET daily_chars_limit = ? WHERE user_id = ?', 
+                            (new_limit, user[0]))
+                    conn.commit()
+                    conn.close()
+                    add_log("info", f"用户 {user[1]} 每日字符限制已更新为 {new_limit}")
+                    st.success("每日字符限制已更新")
+                    st.rerun()
+            
+            # 积分管理
+            st.markdown("#### 积分管理")
+            points_amount = st.number_input(
+                "调整积分数量", 
+                value=100,
+                step=100,
+                key=f"points_{user[0]}"
+            )
+            points_type = st.selectbox(
+                "操作类型",
+                ["奖励", "扣除"],
+                key=f"points_type_{user[0]}"
+            )
+            points_reason = st.text_input(
+                "操作原因",
+                key=f"points_reason_{user[0]}"
+            )
+            
+            if st.button("执行积分操作", key=f"update_points_{user[0]}"):
+                if points_reason:
+                    if points_type == "奖励":
+                        success = bill_mgr.add_points(
+                            user[0], 
+                            points_amount,
+                            'admin',
+                            f"管理员奖励: {points_reason}"
+                        )
+                    else:
+                        success = bill_mgr.deduct_points(
+                            user[0],
+                            points_amount,
+                            'admin',
+                            f"管理员扣除: {points_reason}"
+                        )
+                    
+                    if success:
+                        st.success(f"积分{'奖励' if points_type == '奖励' else '扣除'}成功")
+                        add_log("info", f"管理员{points_type}用户 {user[1]} {points_amount} 积分")
+                        st.rerun()
+                    else:
+                        st.error("操作失败")
+                else:
+                    st.error("请输入操作原因")

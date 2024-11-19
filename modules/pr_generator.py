@@ -2,7 +2,6 @@ import streamlit as st
 from typing import Optional, Dict
 from .api import APIClient
 from .utils import load_prompts, add_log  # 从utils导入add_log
-from modules.notifier import send_wecom_message  # 改用新的导入路径
 
 class PRGenerator:
     def __init__(self, api_client: APIClient, all_in_one: bool = False):
@@ -167,10 +166,3 @@ class PRGenerator:
                     error_msg = f"生成内容时发生错误: {str(e)}"
                     st.error(error_msg)
                     add_log("error", f"❌ {error_msg}")
-
-    def generate_content(self):
-        send_wecom_message('action', st.session_state.user,
-            action="生成PR内容",
-            details=f"核心理念：{st.session_state.get('product_core_sentence', '未知')}"
-        )
-        # 原有的生成逻辑
