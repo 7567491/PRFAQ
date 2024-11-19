@@ -18,12 +18,13 @@ import time
 class EntitlementManager:
     """AWS Marketplace entitlement management"""
     
-    def __init__(self):
+    def __init__(self, test_mode=True):
         """Initialize entitlement manager"""
         self.load_config()
         self._init_clients()
         self._lock = threading.Lock()
         self._cache_timeout = 300  # 5分钟缓存
+        self.test_mode = test_mode  # 记录测试模式状态
         
     def load_config(self):
         """Load AWS configuration"""
@@ -84,41 +85,85 @@ class EntitlementManager:
                     add_log("info", f"Using cached entitlement for {customer_identifier}")
                     return cached
             
-            # Call GetEntitlements API
-            response = self.entitlement_client.get_entitlements(
-                ProductCode=self.config['product_code'],
-                Filter={
-                    'CUSTOMER_IDENTIFIER': [customer_identifier]
-                }
-            )
-            
-            entitlements = response.get('Entitlements', [])
-            if not entitlements:
-                raise EntitlementError(f"No entitlements found for {customer_identifier}")
+            if self.test_mode:
+                # 在测试模式下返回模拟数据
+                return self._get_test_entitlement(customer_identifier)
+            else:
+                # 实际环境调用AWS API
+                response = self.entitlement_client.get_entitlements(
+                    ProductCode=self.config['product_code'],
+                    Filter={
+                        'CUSTOMER_IDENTIFIER': [customer_identifier]
+                    }
+                )
                 
-            # Process entitlements
-            result = {
-                'customer_identifier': customer_identifier,
-                'status': 'ACTIVE',
-                'entitlements': entitlements,
-                'checked_at': datetime.now().isoformat()
-            }
-            
-            # Update cache
-            self._get_cached_entitlement.cache_clear()
-            self._get_cached_entitlement(customer_identifier)
-            
-            # Store in database
-            self._store_entitlement(customer_identifier, result)
-            
-            add_log("info", f"Entitlement check successful for {customer_identifier}")
-            return result
-            
+                entitlements = response.get('Entitlements', [])
+                if not entitlements:
+                    raise EntitlementError(f"No entitlements found for {customer_identifier}")
+                    
+                result = {
+                    'customer_identifier': customer_identifier,
+                    'status': 'ACTIVE',
+                    'entitlements': entitlements,
+                    'checked_at': datetime.now().isoformat()
+                }
+                
+                # 更新缓存
+                self._get_cached_entitlement.cache_clear()
+                self._get_cached_entitlement(customer_identifier)
+                
+                return result
+                
         except Exception as e:
             error_msg = f"Failed to check entitlement: {str(e)}"
             add_log("error", error_msg)
             raise EntitlementError(error_msg)
             
+    def _get_test_entitlement(self, customer_identifier: str) -> Dict[str, Any]:
+        """Generate test entitlement data"""
+        try:
+            # 从数据库获取客户信息
+            conn = sqlite3.connect('db/users.db')
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT aws_customer_id, product_code, subscription_status
+                FROM aws_customers
+                WHERE customer_identifier = ?
+            """, (customer_identifier,))
+            
+            result = cursor.fetchone()
+            if not result:
+                raise EntitlementError(f"Customer not found: {customer_identifier}")
+                
+            aws_customer_id, product_code, subscription_status = result
+            
+            # 生成模拟的授权数据
+            test_entitlement = {
+                'customer_identifier': customer_identifier,
+                'status': 'ACTIVE' if subscription_status == 1 else 'INACTIVE',
+                'entitlements': [{
+                    'Dimension': 'Users',
+                    'Value': 100,
+                    'Unit': 'Count',
+                    'ValidFrom': datetime.now().isoformat(),
+                    'ValidTo': (datetime.now() + timedelta(days=365)).isoformat()
+                }],
+                'checked_at': datetime.now().isoformat()
+            }
+            
+            add_log("info", f"Generated test entitlement for {customer_identifier}")
+            return test_entitlement
+            
+        except Exception as e:
+            error_msg = f"Failed to generate test entitlement: {str(e)}"
+            add_log("error", error_msg)
+            raise EntitlementError(error_msg)
+            
+        finally:
+            if 'conn' in locals():
+                conn.close()
+    
     def _store_entitlement(self, customer_identifier: str, entitlement_data: Dict[str, Any]) -> None:
         """Store entitlement information in database"""
         try:
