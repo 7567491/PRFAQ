@@ -16,10 +16,11 @@ def show_aws_mp_panel():
     """显示AWS Marketplace集成面板"""
     
     # 创建所有标签页
-    tab_basic, tab_mp, tab_customer = st.tabs([
+    tab_basic, tab_mp, tab_customer, tab_entitlement = st.tabs([
         "基础功能", 
         "Marketplace集成",
-        "客户验证"
+        "客户验证",
+        "订阅管理"
     ])
     
     # Tab 1: 基础功能(原有功能)
@@ -65,6 +66,11 @@ def show_aws_mp_panel():
     with tab_customer:
         from .customer import show_customer_panel
         show_customer_panel()
+    
+    # Tab 4: ��阅管理
+    with tab_entitlement:
+        from .entitlement import show_entitlement_panel
+        show_entitlement_panel()
 
 def show_env_check():
     """显示环境变量检查结果"""
@@ -178,7 +184,7 @@ def show_report_generation(creds: Dict[str, str]):
     with col1:
         start_date = st.date_input("开始日期", datetime.now(), key="mp_start_date")
     with col2:
-        end_date = st.date_input("结束日期", datetime.now(), key="mp_end_date")
+        end_date = st.date_input("��束日期", datetime.now(), key="mp_end_date")
         
     if st.button("生成报表", key="mp_gen_report"):
         if start_date > end_date:
