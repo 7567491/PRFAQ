@@ -1,10 +1,7 @@
 import sqlite3
 import hashlib
-import os
 from datetime import datetime
-from typing import Optional, Dict, Any
-from user.logger import add_log
-from db.db_upgrade import upgrade_database
+from modules.logger import add_log
 
 class UserManager:
     def __init__(self):
@@ -13,158 +10,215 @@ class UserManager:
     def get_db_connection(self):
         """获取数据库连接"""
         try:
-            # 使用绝对路径
-            db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'db', 'users.db')
-            conn = sqlite3.connect(db_path)
-            
-            # 检查是否需要升级数据库
-            try:
-                # 尝试访问 points 列，如果不存在会抛出异常
-                c = conn.cursor()
-                c.execute("SELECT points FROM users LIMIT 1")
-            except sqlite3.OperationalError:
-                # 如果 points 列不存在，执行数据库升级
-                conn.close()  # 先关闭当前连接
-                upgrade_database()  # 执行升级
-                conn = sqlite3.connect(db_path)  # 重新连接
-            
+            conn = sqlite3.connect(self.db_path)
             return conn
         except Exception as e:
-            print(f"数据库连接失败: {str(e)}")
-            raise
+            add_log("error", f"数据库连接失败: {str(e)}")
+            return None
     
-    def hash_password(self, password: str) -> str:
-        """密码加密"""
-        return hashlib.sha256(password.encode()).hexdigest()
-    
-    def verify_user(self, username: str, password: str) -> bool:
-        """验证用户登录"""
-        conn = self.get_db_connection()
-        c = conn.cursor()
-        
+    def list_users(self):
+        """获取所有用户列表"""
         try:
-            hashed_input = self.hash_password(password)
-            # 同时检查用户是否活跃
-            c.execute('''
-                SELECT username, password, is_active 
-                FROM users 
-                WHERE username = ?
-            ''', (username,))
-            result = c.fetchone()
+            conn = self.get_db_connection()
+            if not conn:
+                return []
+                
+            cursor = conn.cursor()
             
-            if result and result[1] == hashed_input:
-                if result[2] == 1:  # 检查是否活跃
-                    return True
-                else:
-                    print("账户已被禁用")
-                    return False
-            return False
-        finally:
+            # 按照现有的数据库结构获取用户信息
+            cursor.execute("""
+                SELECT user_id, username, email, phone, org_name, role, 
+                       is_active, created_at, last_login, total_chars,
+                       total_cost, daily_chars_limit, used_chars_today, points
+                FROM users
+                ORDER BY created_at DESC
+            """)
+            
+            columns = [description[0] for description in cursor.description]
+            users = []
+            
+            for row in cursor.fetchall():
+                user_dict = dict(zip(columns, row))
+                # 转换布尔值
+                user_dict['is_active'] = bool(user_dict['is_active'])
+                users.append(user_dict)
+            
             conn.close()
-    
-    def get_user_info(self, username: str) -> Optional[Dict[str, Any]]:
-        """获取用户信息"""
-        conn = self.get_db_connection()
-        c = conn.cursor()
-        
-        try:
-            c.execute('''
-                SELECT user_id, username, email, phone, org_name, role, is_active,
-                       created_at, last_login, total_chars, total_cost,
-                       daily_chars_limit, used_chars_today, points
-                FROM users WHERE username = ?
-            ''', (username,))
+            return users
             
-            result = c.fetchone()
+        except Exception as e:
+            error_msg = f"获取用户列表失败: {str(e)}"
+            add_log("error", error_msg)
+            return []
+    
+    def get_user_role(self, username):
+        """获取用户角色"""
+        try:
+            conn = self.get_db_connection()
+            if not conn:
+                return 'user'
+                
+            cursor = conn.cursor()
+            
+            cursor.execute(
+                "SELECT role FROM users WHERE username = ?",
+                (username,)
+            )
+            result = cursor.fetchone()
+            
+            conn.close()
             
             if result:
-                return {
-                    'user_id': result[0],
-                    'username': result[1],
-                    'email': result[2],
-                    'phone': result[3],
-                    'org_name': result[4],
-                    'role': result[5],
-                    'is_active': bool(result[6]),
-                    'created_at': result[7],
-                    'last_login': result[8],
-                    'total_chars': result[9],
-                    'total_cost': result[10],
-                    'daily_chars_limit': result[11],
-                    'used_chars_today': result[12],
-                    'points': result[13]
-                }
-        except sqlite3.Error as e:
-            add_log("error", f"获取用户信息失败: {str(e)}")
-        finally:
-            conn.close()
-        
-        return None 
+                return result[0]
+            return 'user'  # 默认角色
+            
+        except Exception as e:
+            add_log("error", f"获取用户角色失败: {str(e)}")
+            return 'user'
     
-    def update_last_login(self, username: str):
-        """更新最后登录时间"""
-        conn = self.get_db_connection()
-        c = conn.cursor()
-        
+    def verify_user(self, username, password):
+        """验证用户登录"""
         try:
-            c.execute('''
-                UPDATE users 
-                SET last_login = ? 
-                WHERE username = ?
-            ''', (datetime.now().isoformat(), username))
+            conn = self.get_db_connection()
+            if not conn:
+                return False
+                
+            cursor = conn.cursor()
+            
+            cursor.execute(
+                "SELECT password, is_active FROM users WHERE username = ?",
+                (username,)
+            )
+            result = cursor.fetchone()
+            
+            if not result:
+                return False
+                
+            stored_password, is_active = result
+            
+            # 检查用户是否被禁用
+            if not is_active:
+                return False
+            
+            # 验证密码
+            hashed_password = hashlib.sha256(password.encode()).hexdigest()
+            if hashed_password == stored_password:
+                return True
+                
+            return False
+            
+        except Exception as e:
+            add_log("error", f"验证用户失败: {str(e)}")
+            return False
+        finally:
+            if 'conn' in locals():
+                conn.close()
+    
+    def get_user_info(self, username):
+        """获取用户详细信息"""
+        try:
+            conn = self.get_db_connection()
+            if not conn:
+                return None
+                
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT user_id, username, email, phone, org_name, role,
+                       is_active, created_at, last_login, total_chars,
+                       total_cost, daily_chars_limit, used_chars_today, points
+                FROM users WHERE username = ?
+            """, (username,))
+            
+            result = cursor.fetchone()
+            
+            if result:
+                columns = [description[0] for description in cursor.description]
+                user_info = dict(zip(columns, result))
+                user_info['is_active'] = bool(user_info['is_active'])
+                return user_info
+            return None
+            
+        except Exception as e:
+            add_log("error", f"获取用户信息失败: {str(e)}")
+            return None
+        finally:
+            if 'conn' in locals():
+                conn.close()
+    
+    def update_last_login(self, username):
+        """更新用户最后登录时间"""
+        try:
+            conn = self.get_db_connection()
+            if not conn:
+                return False
+                
+            cursor = conn.cursor()
+            
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            cursor.execute(
+                "UPDATE users SET last_login = ? WHERE username = ?",
+                (current_time, username)
+            )
             
             conn.commit()
-            add_log("info", f"更新用户 {username} 最后登录时间")
+            conn.close()
             return True
+            
         except Exception as e:
-            conn.rollback()
             add_log("error", f"更新最后登录时间失败: {str(e)}")
             return False
-        finally:
-            conn.close()
     
-    def update_usage_stats(self, username: str, chars: int = 0, cost: float = 0.0):
-        """更新用户使用统计"""
-        conn = self.get_db_connection()
-        c = conn.cursor()
-        
+    def create_user(self, username, password, user_data=None, role='user'):
+        """创建新用户"""
         try:
-            c.execute('''
-                UPDATE users 
-                SET total_chars = total_chars + ?,
-                    total_cost = total_cost + ?,
-                    used_chars_today = used_chars_today + ?
-                WHERE username = ?
-            ''', (chars, cost, chars, username))
+            conn = self.get_db_connection()
+            if not conn:
+                return False, "数据库连接失败"
+            
+            cursor = conn.cursor()
+            
+            # 检查用户名是否已存在
+            cursor.execute("SELECT 1 FROM users WHERE username = ?", (username,))
+            if cursor.fetchone():
+                return False, "用户名已存在"
+            
+            # 生成用户ID (简单格式：user_当前时间戳)
+            user_id = f"user_{int(datetime.now().timestamp())}"
+            
+            # 创建新用户，初始积分设为20000
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            hashed_password = hashlib.sha256(password.encode()).hexdigest()
+            
+            # 准备用户数据
+            user_data = user_data or {}
+            
+            cursor.execute("""
+                INSERT INTO users (
+                    user_id, username, password, email, phone, org_name,
+                    role, is_active, created_at, last_login,
+                    total_chars, total_cost, daily_chars_limit,
+                    used_chars_today, points
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 0, 0.0, 100000, 0, 20000)
+            """, (
+                user_id,
+                username,
+                hashed_password,
+                user_data.get('email', ''),
+                user_data.get('phone', ''),
+                user_data.get('org_name', ''),
+                role,
+                current_time,
+                current_time
+            ))
             
             conn.commit()
-            add_log("info", f"更新用户 {username} 使用统计")
-            return True
-        except Exception as e:
-            conn.rollback()
-            add_log("error", f"更新使用统计失败: {str(e)}")
-            return False
-        finally:
             conn.close()
-    
-    def check_daily_limit(self, username: str) -> bool:
-        """检查用户是否达到每日字符使用限制"""
-        conn = self.get_db_connection()
-        c = conn.cursor()
-        
-        try:
-            c.execute('''
-                SELECT daily_chars_limit, used_chars_today 
-                FROM users WHERE username = ?
-            ''', (username,))
             
-            result = c.fetchone()
-            if result:
-                daily_limit, used_today = result
-                return used_today < daily_limit
-            return False
+            add_log("info", f"创建新用户成功: {username}")
+            return True, "用户创建成功"
+            
         except Exception as e:
-            add_log("error", f"检查每日限制失败: {str(e)}")
-            return False
-        finally:
-            conn.close()
+            error_msg = f"创建用户失败: {str(e)}"
+            add_log("error", error_msg)
+            return False, error_msg

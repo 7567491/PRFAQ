@@ -8,7 +8,10 @@ from modules.utils import (
     load_history, 
     save_history, 
     load_letters,
-    add_log
+    add_log,
+    send_wecom_message,
+    get_client_ip,
+    get_client_os
 )
 from modules.pr_generator import PRGenerator
 from modules.faq_generator import FAQGenerator
@@ -28,6 +31,8 @@ from user.user_history import show_user_history
 from db.db_upgrade import check_and_upgrade
 import sys
 import traceback
+import os
+from modules.notifier import send_wecom_message
 
 def clear_main_content():
     """Clear all content in the main area except core sentence and logs"""
@@ -51,6 +56,13 @@ def clear_main_content():
 
 def main():
     try:
+        # 检查是否需要重启
+        if os.path.exists("restart.flag"):
+            os.remove("restart.flag")
+            # 清除所有会话状态
+            st.session_state.clear()
+            # 重新初始化数据库连接
+            
         # 检查并升级数据库
         upgrade_result = check_and_upgrade()
         if not upgrade_result:
@@ -213,7 +225,7 @@ def render_sidebar():
         if st.button("📰 逆向工作法", use_container_width=True):
             clear_main_content()
             st.session_state.current_section = 'pr'
-            add_log("info", "切换到逆向工作法模式")
+            add_log("info", "进入逆向工作法模式")
         
         if st.button("📊 复盘六步法", use_container_width=True):
             clear_main_content()
@@ -263,8 +275,16 @@ def render_sidebar():
 def render_main_content(config, templates):
     """渲染主要内容区域"""
     if st.session_state.current_section == 'admin':
+        send_wecom_message('action', st.session_state.user, 
+            action="访问管理面板",
+            details="进入用户管理界面"
+        )
         show_admin_panel()
     elif st.session_state.current_section == 'db_admin':
+        send_wecom_message('action', st.session_state.user,
+            action="访问数据库管理",
+            details="进入数据库管理界面"
+        )
         show_db_admin()
     elif st.session_state.current_section == 'aws_mp':
         from aws.aws_mp import show_aws_panel
@@ -281,9 +301,10 @@ def render_main_content(config, templates):
         all_in_one_generator = AllInOneGenerator(api_client)
         all_in_one_generator.render()
     elif st.session_state.current_section == 'pr':
-        st.markdown("""
-        逆向工作法是一种从结果反推过程的创新思维方法。通过先设想理想的最终成果，再逐步分析实现这个结果所需的步骤和条件，帮助我们更清晰地规划项目路径。本模块将帮助您运用这种方法，通过编写未来新闻稿的形式，明确项目目标和关键成功要素。您只需要输入产品的核心理念，系统就会协助您生成完整的项目愿景说明，包括目标受众、价值主张、功能特性等关键内容。
-        """)
+        send_wecom_message('action', st.session_state.user,
+            action="使用逆向工作法",
+            details="开始新的PR编写"
+        )
         api_client = APIClient(config)
         pr_generator = PRGenerator(api_client)
         pr_generator.render()
@@ -345,7 +366,7 @@ def render_main_content(config, templates):
             # 渲染测试界面
             result = career_test.render()
             
-            # 如果测试完成并有结果，保存到历史记��
+            # 如果测试完成并有结果，保存到历史记
             if result and 'final_result' in st.session_state:
                 try:
                     save_history(
