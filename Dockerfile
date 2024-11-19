@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
     libffi-dev \
     libssl-dev \
     fonts-liberation \
+    sqlite3 \
+    libsqlite3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装中文字体支持
@@ -23,8 +25,11 @@ COPY . .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+# 创建数据卷
+VOLUME ["/app/db", "/app/assets"]
+
 # 暴露端口
 EXPOSE 8501
 
-# 启动命令（需要根据你的主程序文件名调整）
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"] 
+# 启动命令
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
