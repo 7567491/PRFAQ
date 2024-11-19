@@ -1,0 +1,5 @@
+{
+    "region": "cn-northwest-1",
+    "api_version": "2017-01-11",
+    "entitlement_endpoint": "https://entitlement-marketplace.cn-northwest-1.amazonaws.com.cn"
+}

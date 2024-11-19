@@ -28,6 +28,7 @@ from user.user_history import show_user_history
 from db.db_upgrade import check_and_upgrade
 import sys
 import traceback
+from aws import show_aws_mp_panel
 
 def clear_main_content():
     """Clear all content in the main area except core sentence and logs"""
@@ -70,7 +71,7 @@ def main():
                 
             templates = load_templates()
             if not templates:
-                st.error("模板文件加载失败：templates 为空")
+                st.error("模板文��加载失败：templates 为空")
                 add_log("error", "模板文件加载失败：templates 为空")
                 return
                 
@@ -145,7 +146,7 @@ def render_sidebar():
                 transition: all 0.3s ease;
             }
             
-            /* 鼠标悬停效果 */
+            /* 鼠标悬停效��� */
             .stButton > button:hover {
                 color: black !important;
                 background-color: #ffd700 !important;
@@ -267,8 +268,7 @@ def render_main_content(config, templates):
     elif st.session_state.current_section == 'db_admin':
         show_db_admin()
     elif st.session_state.current_section == 'aws_mp':
-        from aws.aws_mp import show_aws_panel
-        show_aws_panel()
+        show_aws_mp_panel()
     elif st.session_state.current_section == 'chat_test':
         api_client = APIClient(config)
         show_chat_interface(api_client)
@@ -345,7 +345,7 @@ def render_main_content(config, templates):
             # 渲染测试界面
             result = career_test.render()
             
-            # 如果测试完成并有结果，保存到历史记��
+            # 如果测试完成并有结果，保存到历史记
             if result and 'final_result' in st.session_state:
                 try:
                     save_history(
