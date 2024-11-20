@@ -4,7 +4,6 @@ import os
 from datetime import datetime
 from typing import Optional, Dict, Any
 from user.logger import add_log
-from db.db_upgrade import upgrade_database
 
 class UserManager:
     def __init__(self):
@@ -25,7 +24,7 @@ class UserManager:
             except sqlite3.OperationalError:
                 # 如果 points 列不存在，执行数据库升级
                 conn.close()  # 先关闭当前连接
-                upgrade_database()  # 执行升级
+                # upgrade_database()  # 执行升级
                 conn = sqlite3.connect(db_path)  # 重新连接
             
             return conn

@@ -25,7 +25,6 @@ from bill.bill import BillManager, show_bill_detail
 from user.logger import display_logs
 from db.db_admin import show_db_admin
 from user.user_history import show_user_history
-from db.db_upgrade import check_and_upgrade
 import sys
 import traceback
 from aws import show_aws_mp_panel
@@ -53,11 +52,11 @@ def clear_main_content():
 def main():
     try:
         # 检查并升级数据库
-        upgrade_result = check_and_upgrade()
-        if not upgrade_result:
-            st.error("数据库升级失败，请检查日志")
-            add_log("error", "数据库升级失败，程序无法继续运行")
-            return
+        # upgrade_result = check_and_upgrade()
+        # if not upgrade_result:
+        #     st.error("数据库升级失败，请检查日志")
+        #     add_log("error", "数据库升级失败，程序无法继续运行")
+        #     return
         
         # Load configurations
         config = None
@@ -313,7 +312,7 @@ def render_main_content(config, templates):
             # 检查必要的目录和文件
             test_dir = Path("test")
             if not test_dir.exists():
-                raise FileNotFoundError("test��录不存在")
+                raise FileNotFoundError("test录不存在")
             add_log("info", f"test目录存在: {test_dir.absolute()}")
             
             # 检查数据目录

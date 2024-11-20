@@ -2,13 +2,9 @@ import streamlit as st
 from datetime import datetime
 import os
 import sqlite3
-from db.backup_db import backup_database
-from db.db_init import init_database
 from db.read_db import read_database
 from db.db_restore import show_restore_interface
-from db.migrate_data import show_migrate_interface
 from db.db_table import show_table_info
-from db.db_upgrade import upgrade_database
 from user.logger import add_log
 import pandas as pd
 from pathlib import Path
@@ -39,14 +35,10 @@ def show_db_admin():
     st.title("数据库管理")
     
     # 使用选项卡来组织不同功能
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    tab1, tab2, tab3 = st.tabs([
         "📊 数据库状态",
-        "🔧 初始化",
-        "💾 备份",
         "♻️ 恢复",
-        "📥 数据迁移",
-        "📋 表结构",
-        "⚡ 数据库升级"
+        "📋 表结构"
     ])
     
     with tab1:
@@ -117,83 +109,7 @@ def show_db_admin():
                 add_log("error", error_msg)
     
     with tab2:
-        st.markdown("### 数据库初始化")
-        st.warning("⚠️ 初始化操作会影响数据库结构，请谨慎操作！")
-        
-        # 检查数据库是否存在
-        db_exists = os.path.exists('db/users.db')
-        
-        if db_exists:
-            st.info("数据库文件已存在")
-            confirm = st.checkbox("确定要重新初始化吗？这将删除所有现有数据！")
-            if confirm:
-                if st.button("确认重新初始化", use_container_width=True):
-                    try:
-                        # 先备份现有数据库
-                        add_log("info", "开始备份现有数据库...")
-                        if backup_database():
-                            add_log("info", "现有数据库备份成功")
-                            # 删除现有数据库
-                            os.remove('db/users.db')
-                            add_log("info", "已删除现有数据库")
-                            # 执行初始化
-                            if init_database():
-                                st.success("数据库重新初始化成功！")
-                                st.rerun()  # 刷新页面
-                            else:
-                                st.error("数据库初始化失败，请查看日志")
-                        else:
-                            st.error("数据库备份失败，初始化已取消")
-                    except Exception as e:
-                        error_msg = f"数据库初始化失败: {str(e)}"
-                        st.error(error_msg)
-                        add_log("error", error_msg)
-        else:
-            st.info("数据库文件不存在，需要初始化")
-            if st.button("初始化数据库", use_container_width=True):
-                try:
-                    if init_database():
-                        st.success("数据库初始化成功！")
-                        st.rerun()  # 刷新页面
-                    else:
-                        st.error("数据库初始化失败，请查看日志")
-                except Exception as e:
-                    error_msg = f"数据库初始化失败: {str(e)}"
-                    st.error(error_msg)
-                    add_log("error", error_msg)
-    
-    with tab3:
-        st.markdown("### 数据库备份")
-        if st.button("创建备份", use_container_width=True):
-            if backup_database():
-                st.success("数据库备份成功")
-                st.rerun()
-            else:
-                st.error("数据库备份失败")
-    
-    with tab4:
         show_restore_interface()
     
-    with tab5:
-        show_migrate_interface()
-    
-    with tab6:
+    with tab3:
         show_table_info()
-    
-    with tab7:
-        st.markdown("### 数据库升级")
-        st.warning("⚠️ 升级前请确保已备份数据库！")
-        
-        if st.button("开始升级", use_container_width=True):
-            with st.spinner("正在升级数据库..."):
-                results = upgrade_database()
-                
-                if results['success']:
-                    st.success(results['message'])
-                else:
-                    st.error(results['message'])
-                
-                # 显示详细信息
-                st.markdown("#### 升级详情")
-                for detail in results['details']:
-                    st.text(f"• {detail}")
