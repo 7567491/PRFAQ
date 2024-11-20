@@ -4,7 +4,7 @@
 """
 
 from .db_restore import restore_database
-from .read_db import read_database
+from .db_read import read_database
 
 __all__ = [
     'restore_database',
