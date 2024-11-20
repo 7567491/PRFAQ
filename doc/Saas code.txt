@@ -1,0 +1,5 @@
+SaaS 产品集成需要的相关信息：
+产品product code ：8av06tw3mfeh59g5alaw3s163  
+产品SNS：  
+subscription ARN：arn:aws-cn:sns:cn-northwest-1:288683096364:aws-mp-subscription-notification-8av06tw3mfeh59g5alaw3s163 
+entitlement ARN：arn:aws-cn:sns:cn-northwest-1:288683096364:aws-mp-entitlement-notification-8av06tw3mfeh59g5alaw3s163   

@@ -1,0 +1,666 @@
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+AWS Marketplace
+SaaS Listing Process &
+Integration Guide
+1
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+1. Register as a seller and submit tax & banking information. This step is required before you can request to list a
+paid product.
+2. Become familiar with the AWS Marketplace Management Portal (AMMP). This is the tool that you use to
+register as a seller and manage the products that you sell on AWS Marketplace.
+3. Learn about tools available to you as an AWS Marketplace seller.
+4. Determine your product s pricing model. SaaS products can be created with one of three pricing options:
+Contract, Contract with Consumption, or Subscription.
+AWS Marketplace SaaS Guide / About this guide
+About this guide
+Audience
+This guide is for independent software vendors (ISVs), selling SaaS products in AWS Marketplace. We have included
+essential information to help you navigate each step of the listing process and understand what s required to
+integrate with AWS Marketplace. In this guide, you will find integration diagrams for each pricing model, code
+examples for interacting with our APIs, a list of frequently asked seller questions, and links to external resources that
+help you deep dive into the concepts presented throughout. Thank you for choosing to list with us and we look
+forward to welcoming you to AWS Marketplace!
+Contents
+2
+SaaS Contract (upfront billing) Code examples
+Frequently Asked Questions (FAQs)
+External resources
+Listing process & integration requirements
+Integration diagram
+SaaS Contract with Consumption
+Listing process & integration requirements
+Integration diagram
+SaaS Subscription (pay-as-you-go)
+Listing process & integration requirements
+Integration diagram
+ResolveCustomer
+GetEntitlement
+BatchMeterUsage
+Before Getting Started
+There are some prerequisites you ll need to complete before submitting your SaaS product and reviewing this guide:
+Click here to learn more about Contract pricing Click here to learn more about Subscription pricing
+Click here to learn how to register & submit tax and banking information.
+Click here to learn about AMMP.
+Click here for your seller toolkit.
+(or)
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+SaaS Contract
+Listing process &
+integration requirements
+Integration diagram
+AWS Marketplace SaaS Guide / SaaS Contract
+3
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+1
+2
+3
+Collect Assets
+Before submitting a product, you will need to provide:
+ Product logo URL
+ End User License Agreement (EULA) URL
+ SaaS fulfillment URL (redirect page customers will be sent to after subscribing)
+ Metadata
+ Support information
+Submit via Management Portal
+Create a product page using a seller account that has access to the AWS Marketplace
+Management Portal (AMMP).
+Product Page Published to Limited
+The AWS MP Ops team will publish your submission as a limited product page visible to
+you and any AWS accounts you have requested to be whitelisted. Prices will be
+temporarily reduced to enable you to test the purchase flow without incurring high
+charges. The Ops team will send you the following via email to enable this testing:
+ Product code
+ SNS topic(s)
+ Product page URL
+4 Validate New Customers
+After a customer subscribes to your product, they will be redirected to the fulfillment URL.
+The redirect is a POST request & includes a temporary token. Your app then needs to:
+ Exchange the token for a customerID by calling ResolveCustomer in the AWS
+Marketplace Metering Service.
+ After obtaining a customerID, persist it in your application for future calls.
+ With the customerID, call GetEntitlement in the AWS Marketplace Entitlement Service
+to verify which dimension the customer is subscribed to and the quantity, if applicable.
+Onboard New Customers
+After successfully verifying a customer s subscription, onboard them onto your
+application. For example, have them fill out a form to create a new user account. Or,
+provide them with next steps to get access to the application.
+5
+AWS Marketplace SaaS Guide / SaaS Contract / Listing Process & Integration Requirements
+Listing Process
+4
+Integration Requirements
+SaaS Contract
+Monitor for Changes
+Setup an SQS queue and subscribe to your product s SNS topic. This topic provides
+notifications about changes to customers subscription and entitlement statuses. This
+enables you to know when to provide and revoke access for specific customers. Possible
+scenarios include: unsubscribes, upgrades, renewals, & failed subscription.
+7
+Handle No Entitlement Scenarios
+If no entitlement is returned from GetEntitlement, either during onboarding or
+ongoing verification, determine how to manage access & their experience.
+6
+Listing Process (continued after completion of integration)
+End-to-end testing with AWS Marketplace
+After you have completed all the integration requirements and tested the solution,
+notify the AWS Marketplace Ops team. They will then test the solution by verifying you
+have successfully called GetEntitlement and sufficiently onboard new customers.
+After end-to-end testing is complete, you will have the chance to review the product
+page with the original prices. After giving approval, the AWS Marketplace Ops team will
+make the product page live in the public catalog.
+8
+Note: Each item refers to a step in the diagram (see next page)
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+Verifying
+Customers
+Decide to List
+SaaS Product
+Review SaaS
+Seller Guide
+Determine
+pricing & offer
+type
+Collect Assets
+Submit
+Product
+via
+AMMP
+AWS MP
+Publishes
+Product to
+Limited
+SaaS
+Integration
+AWS MP Endto-End
+Testing
+Product Live
+1
+2 3
+Accepting New
+Customers
+Accept HTTP POST
+request
+x-amzn-marketplacetoken
+MS
+ES
+= Seller (ISV) Action
+= AWS Marketplace Entitlement Service API
+Key:
+= AWS Marketplace Metering Service API
+= AWS Marketplace Ops Team Action
+Grant access to
+product based on
+dimensions returned
+in entitlement
+New customers in
+onboarding workflow
+Existing customers
+already using product
+DB
+Listen for:
+Call
+ResolveCustomer
+MS
+Store CustomerID
+Setup new
+queue in SQS
+If no entitlement returned
+Handle each scenario
+If active entitlement
+Call GetEntitlement
+to verify active
+subscription
+ES
+Check customer s
+entitlement
+entitlement-updated
+message
+With CustomerID
+Subscribe
+to:
+Entitlement
+SNS topic
+4
+X = Code example (see code example pages)
+A
+B
+= AWS Service
+X = Steps (see previous page)
+5
+AWS Marketplace SaaS Guide / SaaS Contract / Integration Diagram
+8
+Monitoring for
+Subscription Changes
+SaaS Contract (cont.)
+Example SNS Topic
+arn:aws:sns:us-east-1:287250355862:aws-mpentitlement-notification-PRODUCTCODE
+5
+7
+6
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+SaaS Contract
+with Consumption
+Listing process &
+Integration requirements
+Integration diagram
+AWS Marketplace SaaS Guide / SaaS Contract with Consumption
+6
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+1
+2
+3
+Collect Assets
+Before submitting a product, you will need to provide:
+ Product logo URL
+ End User License Agreement (EULA) URL
+ SaaS fulfillment URL (redirect page customers will be sent to after subscribing)
+ Metadata
+ Support information
+Submit via Management Portal
+Create a product page using a seller account that has access to the AWS Marketplace
+Management Portal (AMMP).
+4 Validate New Customers
+After a customer subscribes to your product, they will be redirected to the fulfillment URL.
+The redirect is a POST request & includes a temporary token. Your app then needs to:
+ Exchange the token for a customerID by calling ResolveCustomer in the AWS
+Marketplace Metering Service.
+ After obtaining a customerID, persist it in your application for future calls.
+ With the customerID, call GetEntitlement in the AWS Marketplace Entitlement Service
+to verify which dimension the customer is subscribed to and the quantity, if applicable.
+Onboard New Customers
+After successfully verifying a customer s subscription, onboard them onto your
+application. For example, have them fill out a form to create a new user account. Or,
+provide them with next steps to get access to the application.
+5
+AWS Marketplace SaaS Guide / SaaS Contract with Consumption / Listing Process & Integration Requirements
+Listing Process
+7
+Integration Requirements
+SaaS Contract with Consumption
+Sending Metering Records
+You use the BatchMeterUsage operation in the AWS Marketplace Metering Service to
+deliver metering records to AWS on behalf of your customers. We recommend using
+CloudTrail to monitor activity to ensure that billing information is being sent to AWS
+Marketplace. Keep in mind when sending metering records:
+ Marketplace de-duplicates metering requests on the hour
+ Records sent every hour are cumulative
+ Best practice is to send records every hour, even if quantity is 0
+7
+Handle No Entitlement Scenarios
+If no entitlement is returned from GetEntitlement, either during onboarding or
+ongoing verification, determine how to manage access & their experience.
+6
+Listing Process (continued after completion of integration)
+End-to-end testing with AWS Marketplace
+After you have completed all the integration requirements and tested the solution,
+notify the AWS Marketplace Ops team. They will then test the solution by verifying you
+have successfully called GetEntitlement and sufficiently onboard new customers.
+They will also verify you have successfully sent metered records via BatchMeterUsage.
+After end-to-end testing is complete, you will have the chance to review the product
+page with the original prices. After giving approval, the AWS Marketplace Ops team will
+make the product page live in the public catalog.
+9
+Monitor for Changes
+Setup an SQS queue and subscribe to your product s SNS topics. These topics provide
+notifications about changes to customers subscription and entitlement statuses. This
+enables you to know when to provide and revoke access for specific customers. Possible
+scenarios include: unsubscribes, upgrades, renewals, & failed subscription.
+8
+Note: Each item refers to a step in the diagram (see next page)
+Product Page Published to Limited
+The AWS MP Ops team will publish your submission as a limited product page visible to
+you and any AWS accounts you have requested to be whitelisted. Prices will be
+temporarily reduced to enable you to test the purchase flow without incurring high
+charges. The Ops team will send you the following via email to enable this testing:
+ Product code
+ SNS topic(s)
+ Product page URL
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+Verifying
+Customers
+Decide to List
+SaaS Product
+Review SaaS
+Seller Guide
+Determine
+pricing & offer
+type
+Collect Assets
+Submit
+Product
+via
+AMMP
+AWS MP
+Publishes
+Product to
+Limited
+SaaS
+Integration
+AWS MP Endto-End
+Testing
+Product Live
+Accepting New
+Customers
+Accept HTTP POST
+request
+x-amzn-marketplacetoken
+Grant access to
+product based on
+dimensions returned
+in entitlement
+New customers in
+onboarding workflow
+Existing customers
+already using product
+DB
+Listen for:
+Call
+ResolveCustomer
+MS
+Store CustomerID
+Setup new
+queue in SQS
+If no entitlement returned
+Handle each scenario
+If active entitlement
+Call GetEntitlement
+to verify active
+subscription
+ES
+Check customer s
+entitlement
+entitlement-updated
+message
+With CustomerID
+Subscribe
+to:
+Entitlement
+SNS topic
+4
+A
+B
+8
+AWS Marketplace SaaS Guide / SaaS Contract with Consumption / Integration Diagram
+Monitoring for
+Subscription Changes
+SaaS Contract with Consumption (cont.)
+Example Entitlement SNS Topic
+arn:aws:sns:us-east-1:287250355862:aws-mpentitlement-notification-PRODUCTCODE
+5
+6
+1
+2 3 9
+Metering Send
+Reporting
+Metered Records
+Send record to
+BatchMeterUsage
+Log API calls to
+CloudWatch
+C
+7
+Listen for and handle each scenario:
+Subscribe
+to:
+Subscription
+SNS topic
+MS
+ES
+= Seller (ISV) Action
+= AWS Marketplace Entitlement Service API
+Key:
+= AWS Marketplace Metering Service API
+= AWS Marketplace Ops Team Action
+X = Code example (see code example pages)
+= AWS Service
+X = Steps (see previous page)
+Example Subscription SNS Topic
+arn:aws:sns:us-east-1:287250355862:aws-mpsubscription-notification-PRODUCTCODE
+unsubscribe-success
+message
+subscribe-fail
+message
+unsubscribe-pending
+message
+subscribe-success
+message
+8
+8
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+SaaS Subscription
+Listing process &
+Integration requirements
+Integration diagram
+AWS Marketplace SaaS Guide / SaaS Subscription
+9
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+1
+2
+3
+Collect Assets
+Before submitting a product, you will need to provide:
+ Product logo URL
+ End User License Agreement (EULA) URL
+ SaaS fulfillment URL (redirect page customers will be sent to after subscribing)
+ Metadata
+ Support information
+Submit via Management Portal
+Create a product page using a seller account that has access to the AWS Marketplace
+Management Portal (AMMP).
+4 Validate New Customers
+After a customer subscribes to your product, they will be redirected to the fulfillment URL.
+The redirect is a POST request & includes a temporary token. Your app then needs to:
+ Exchange the token for a customerID by calling ResolveCustomer in the AWS
+Marketplace Metering Service.
+ After obtaining a customerID, persist it in your application for future calls.
+Onboard New Customers
+After successfully verifying a customer, onboard them onto your application. For
+example, have them fill out a form to create a new user account. Or, provide them with
+next steps to get access to the application.
+5
+AWS Marketplace SaaS Guide / SaaS Subscription / Listing Process & Integration Requirements
+Listing Process
+10
+Integration Requirements
+SaaS Subscription
+Sending Metering Records
+You use the BatchMeterUsage operation in the AWS Marketplace Metering Service to
+deliver metering records to AWS on behalf of your customers. We recommend using
+CloudTrail to monitor activity to ensure that billing information is being sent to AWS
+Marketplace. Keep in mind when sending metering records:
+ Marketplace de-duplicates metering requests on the hour
+ Records sent every hour are cumulative
+ Best practice is to send records every hour, even if quantity is 0
+6
+Verify Successful Subscription
+After you receive a subscription notification with subscribe-success, the customer
+account is ready for metering. Records that you send before this notification aren't
+metered. Additionally, we recommend waiting for this message before launching
+resources on behalf of a customer.
+8
+Listing Process (continued after completion of integration)
+End-to-end testing with AWS Marketplace
+After you have completed all the integration requirements and tested the solution,
+notify the AWS Marketplace Ops team. They will then test the solution by verifying you
+have successfully sent metered records via BatchMeterUsage and sufficiently onboard
+new customers.
+After end-to-end testing is complete, you will have the chance to review the product
+page with the original prices. After giving approval, the AWS Marketplace Ops team will
+make the product page live in the public catalog.
+9
+Monitor for Changes
+Setup an SQS queue and subscribe to your product s SNS topic. This topic provides
+notifications about changes to customers subscription. This enables you to know when
+to provide and revoke access for specific customers. Possible scenarios include:
+unsubscribes, successful subscription, & failed subscription.
+7
+Note: Each item refers to a step in the diagram (see next page)
+Product Page Published to Limited
+The AWS MP Ops team will publish your submission as a limited product page visible to
+you and any AWS accounts you have requested to be whitelisted. Prices will be
+temporarily reduced to enable you to test the purchase flow without incurring high
+charges. The Ops team will send you the following via email to enable this testing:
+ Product code
+ SNS topic(s)
+ Product page URL
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+Verifying
+Customers
+Decide to List
+SaaS Product
+Review SaaS
+Seller Guide
+Determine
+pricing & offer
+type
+Collect Assets
+Submit
+Product
+via
+AMMP
+AWS MP
+Publishes
+Product to
+Limited
+SaaS
+Integration
+AWS MP Endto-End
+Testing
+Product Live
+Accepting New
+Customers
+Accept HTTP POST
+request
+x-amzn-marketplacetoken
+Grant access to
+product
+DB
+Call
+ResolveCustomer
+MS
+Store CustomerID
+Setup new
+queue in SQS
+4
+A
+11
+AWS Marketplace SaaS Guide / SaaS Subscription / Integration Diagram
+Monitoring for
+Subscription Changes
+SaaS Subscription (cont.)
+5
+7
+1
+2 3 9
+Metering Send
+Reporting
+Metered Records
+Send record to
+BatchMeterUsage
+Log API calls to
+CloudWatch
+C
+6
+Listen for and handle each scenario:
+Subscribe
+to:
+Subscription
+SNS topic
+MS
+= Seller (ISV) Action
+Key:
+= AWS Marketplace Metering Service API
+= AWS Marketplace Ops Team Action
+X = Code example (see code example pages)
+= AWS Service
+X = Steps (see previous page)
+Example Subscription SNS Topic
+arn:aws:sns:us-east-1:287250355862:aws-mpsubscription-notification-PRODUCTCODE
+unsubscribe-success
+message
+subscribe-fail
+message
+unsubscribe-pending
+message
+subscribe-success
+message
+Verify you receive subscribe-success
+before spinning up resources on behalf of customers
+8
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+Code Examples
+ResolveCustomer
+GetEntitlement
+BatchMeterUsage
+AWS Marketplace SaaS Guide / Code Examples
+12
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+AWS Marketplace SaaS Guide / Code Examples / A - ResolveCustomer
+A ResolveCustomer
+Purpose
+Exchanging x-amzn-marketplace-token for customerID.
+Example (Python)
+Reference
+https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/meteringmarketplace.html#MarketplaceMetering.Client.resolve_customer
+Response from ResolveCustomer
+13
+Pricing Models
+This code example is relevant for all pricing models (i.e. Contract, Contract with Consumption, & Subscription).
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+AWS Marketplace SaaS Guide / Code Examples / B - GetEntitlement
+B GetEntitlement
+Purpose
+Verify that a customer has an active entitlement. Identify which dimension(s) that customer is subscribed to.
+Example (Python)
+Reference
+https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/marketplace-entitlement.html#MarketplaceEntitlementService.Client.get_entitlements
+Response from GetEntitlement
+Note: the Value returned will correspond to the API dimensions created when
+setting up the product in the AWS Marketplace Management Portal (AMMP)
+14
+Pricing Models
+This code example is relevant for SaaS Contract & Contract with Consumption.
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+AWS Marketplace SaaS Guide / Code Examples / C - BatchMeterUsage
+C BatchMeterUsage
+Purpose
+Send a metering record to AWS Marketplace.
+Example (Python)
+Reference
+https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/meteringmarketplace.html#MarketplaceMetering.Client.batch_meter_usage
+Response from BatchMeterUsage
+15
+Pricing Models
+This code example is relevant for SaaS Subscription & Contract with Consumption.
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+AWS Marketplace SaaS Guide / Frequently Asked Questions (FAQs)
+Frequently Asked Questions (FAQs)
+Entitlements
+How can I audit my existing entitlements?
+You can create a job to periodically call GetEntitlements for all customer identifiers in your database. AWS
+throttles your call volume to 10 TPS.
+Should I revoke access on the expiration date indicated in the entitlement document if I don t
+receive a notification that the entitlement document has been updated?
+No. Your product should wait for an entitlement update or periodically check GetEntitlements to verify that the
+allocation should be revoked. Use the expiration field only to notify customers of a possible loss in allocated
+resources. Don't use the information in this field to limit functionality. Amazon SNS notifications are delivered with
+best effort, so your product should check GetEntitlements before revoking access.
+Cancellations
+How do I handle cancellations?
+Customers cancel SaaS subscription products through their AWS account. When a customer cancels a subscription,
+you receive a notification, and you have 1 hour to send a final metering record for the customer. You notify the
+customer from your product that the cancellation is in progress. If a customer indicates that they want to cancel
+through your product, direct the customer to AWS Marketplace.
+For SaaS contract products, customers can request a cancellation and refund within 48 hours through AWS Support.
+When a customer cancels a contract, you receive a notification, and have 1 hour to send a final metering record for
+the customer for any additional usage charges.
+Customer Experience
+Can a customer downgrade their contract?
+No. Customers can only upgrade to one of a higher value except for longer durations. For example, they can upgrade
+to higher quantities or higher-value entitlements. Customers are given a prorated credit for their existing contract.
+Customers can't decrease the size of their existing contract. They can only decrease the size at renewal, or cancel
+their renewal.
+Testing Your Integration
+What should I test when integrating my product with AWS Marketplace?
+We recommend you test: new customer registration, existing customer registration, duplicate accounts,
+unsubscriptions, metering records successfully sent (SaaS subscription only), and metering records captured by AWS
+CloudTrail (SaaS subscription only). Click here for more details about testing.
+How do I subscribe to my product while testing?
+During the onboarding process, we recommend you create a second AWS account ID for testing. During the listing
+process, you can whitelist this additional account. Only accounts that are whitelisted can view and subscribe to the
+product. You sign in to the test account to view your SaaS product on AWS Marketplace and use it to verify the
+metering and billing process on an ongoing basis.
+Private Offers
+How do I transact with private offers for SaaS-based products?
+Before transacting with a private offer, your SaaS product must have a publicly available dimension similar to the
+service you intend to include in the private offer. Additionally, the offer must match durations already enabled in
+your product. Private offers augment the public offering (pricing, dimension and EULA) but do not change the
+technical integration. Click here to read more about getting started with private offers.
+16
+© 2019, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+AWS Marketplace SaaS Guide / External resources
+External Resources
+17
+Below are resources to help get you started as a SaaS seller. Click each link to open the resource in your browser.
+AWS Marketplace Seller Guide
+Software-as-a-Service Overview
+SaaS Purchase Flow
+Testing Your SaaS Product
+Reporting
+Blog Articles
+How to Best Architect Your AWS Marketplace SaaS Subscription Across Multiple AWS Accounts
+7 Tips to Successfully Submit Your Product Listing in AWS Marketplace
+Going to Market with SaaS Subscriptions and Contracts in AWS Marketplace
+Tutorials
+Delegate Access Across AWS Accounts Using IAM Roles
+Sending Amazon SNS Messages to an Amazon SQS Queue in a Different Account
+Creating an Amazon SQS Queue
+Subscribing an Amazon SQS Queue to an Amazon SNS Topic
+Developers
+AWS Marketplace Metering Service API Reference
+AWS Marketplace Entitlement Service API Reference
+IAM Policy for SaaS Products
+AWS SDKs
+Private Offers
+Seller Private Offers Overview
+AWS Marketplace Enhanced Data Sharing Program

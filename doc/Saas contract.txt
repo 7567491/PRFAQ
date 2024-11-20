@@ -1,0 +1,177 @@
+aaS Contract ISV Integration SOP 中文版
+这篇文章介绍如何将您的 SaaS 合同 (Contract) 产品集成到 AWS Marketplace。
+
+将您的产品与 AWS Marketplace 集成是创建 SaaS 产品的一个步骤。要将您的软件即服务 (SaaS) 合同产品与 AWS Marketplace 集成，您必须编写代码并证明它可以成功响应多种客户场景。以下部分描述了这些场景，如何响应它们，并概述了测试您的集成的过程。
+
+注意
+在开始之前，请确保您已为您的软件即服务 (SaaS) 产品选择正确的定价模型。有关更多信息，请参见计划您的 SaaS 产品。
+
+主题
+场景：您的服务验证新客户
+场景：您的服务处理客户请求
+监控用户订阅的更改
+测试您的 SaaS 合同产品集成
+场景：您的服务验证新客户
+当客户订阅您的产品时，他们会重定向到您的注册 URL，这是一个带有临时 x-amzn-marketplace-token 令牌(token)的 HTTP POST 请求。请用以下方式响应此请求：
+通过调用 AWS Marketplace Metering Service 中的 ResolveCustomer API 操作，将令牌(token)交换为 CustomerIdentifier、CustomerAWSAccountId 和 ProductCode。
+通过调用 AWS Marketplace Entitlement Service 中的 GetEntitlements API 操作，验证客户可以访问的订阅和数量（如果适用）。
+将 CustomerIdentifier、CustomerAWSAccountId 和 ProductCode 保存到您的系统中，以便将来调用。存储客户是否拥有有效订阅以及您需要的所有有关客户的信息。
+作为对请求的响应，您必须展示用户的首次使用体验 (如果适用于您的服务）。
+
+场景：您的服务处理客户请求
+当客户向您的服务发出请求时，您必须通过以下场景采取适当的行动或消息进行响应：
+他们没有您的系统中的客户 ID。这意味着他们还没有订阅。您应该告诉用户如何订阅。
+他们拥有客户 ID，并且 GetEntitlements API 操作返回适当的授权。在这种情况下，您应该满足请求。
+他们确实拥有客户 ID，但 GetEntitlements API 操作没有返回授权，或者数量不足以满足请求。在这种情况下，您必须确定如何处理访问并管理他们的体验。
+
+场景：监控用户订阅的更改
+设置一个 Amazon Simple Queue Service (Amazon SQS) 队列，并订阅您产品的 Amazon SNS 主题。您的 SNS 主题信息包含在您创建产品时从 AWS Marketplace Operations 团队收到的电子邮件中。有关更多信息，请参见创建 SaaS 产品。通过订阅您的 SNS 主题，您将收到有关客户授权更改的通知，包括为特定客户提供或撤销访问权限。
+
+注意
+SNS 主题 Amazon 资源名称 (ARN) 类似于 arn:aws-cn:sns:cn-northwest-1:<account id>:aws-mp-entitlement-notification-<product code>。 
+
+您唯一必须响应的通知是：
+entitlement-updated – 客户授权已更改，您必须调用 GetEntitlements API 操作查看新状态。更新您的客户存储，并且，如果适用（例如，客户合同已过期），请按照您的实践关闭客户资源，遵守您的保留策略。
+
+注意
+有关更多信息，请参见检查授权。
+
+测试您的 SaaS 合同产品集成
+在将您的 SaaS 合同产品集成到 AWS Marketplace 之后，您必须进行深入测试以确保集成成功。以下步骤概述了验证产品集成的过程：
+
+注意
+使用您自己的账号订阅您的产品并测试集成是否成功。您可以暂时降低价格，以便在这些账号中测试购买流程，而不会产生高额费用。有关如何降低价格或允许其他测试账号访问您的产品的更多信息，请联系我们。
+
+产品发布后，服务必须继续为新客户响应这些场景。
+
+使用允许的账户通过获取产品合同来测试客户体验。
+账户签订合约后，确保将账户重定向到注册 URL，并且重定向是包含临时令牌(token)的 POST 请求。确保您的应用程序保留客户 ID 以备处理将来调用，并正确处理客户所拥有的权利(entitlement)。这测试了一部分场景：您的服务验证新客户。
+在上一步中验证测试账户后，将该账户注册到应用程序中。例如，您可以让测试客户填写表单来创建新用户。或者，向这些客户提供其他后续步骤以获取对 SaaS 应用程序的访问权限。这测试了一部分场景：您的服务验证新客户.
+如果GetEntitlements API 操作未返回任何授权，无论是在首次集成还是在您的持续验证通过期间，您的应用程序都必须正确管理没有授权的用户的访问和体验。这个测试场景：您的服务处理客户请求。
+测试订阅变更。验证您的应用程序是否正确处理了取消订阅、成功订阅和订阅失败的情况。这个测试场景：监控用户订阅的更改。
+完成所有集成要求并测试解决方案后，通知AWS Marketplace运营团队。然后，他们将通过验证您是否成功调用GetEntitlements API 操作并充分集成了新客户来测试解决方案。
+集成和测试完成后，您可以进行最终审查并将您的产品在AWS Marketplace发布并且公开(public)。有关更多信息，请参阅创建 SaaS 产品：您也可以通过填写退款申请表来取消测试订阅。有关取消订阅的更多信息，请参阅AWS Marketplace产品退款流程。
+
+Code Example
+Entitlement Service Client需要指定endpoint为 "https://entitlement-marketplace.cn-northwest-1.amazonaws.com.cn"  可参考例子中的代码。
+ISV首先需要构建Marketplace Metering Service Client 访问ResolveCustomer API 去获取Customer Identifier 以及 productCode. 
+ISV然后需要构建Marketplace Entitlement Service Client 访问GetEntitlements API 去获取Entitlements。
+Java 例子
+Source Code
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.marketplaceentitlement.MarketplaceEntitlementClient;
+import software.amazon.awssdk.services.marketplaceentitlement.model.GetEntitlementFilterName;
+import software.amazon.awssdk.services.marketplaceentitlement.model.GetEntitlementsRequest;
+import software.amazon.awssdk.services.marketplaceentitlement.model.GetEntitlementsResponse;
+import software.amazon.awssdk.services.marketplacemetering.MarketplaceMeteringClient;
+import software.amazon.awssdk.services.marketplacemetering.model.ResolveCustomerRequest;
+import software.amazon.awssdk.services.marketplacemetering.model.ResolveCustomerResponse;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Map;
+
+public class Main {
+    public static void main(String[] args) throws URISyntaxException {
+
+        final AwsCredentialsProvider awsCredentialsProvider =
+                StaticCredentialsProvider.create(AwsBasicCredentials.create("{ak}", "{sk}"));
+
+        final MarketplaceMeteringClient meteringClient = MarketplaceMeteringClient.builder()
+                .region(Region.CN_NORTHWEST_1)
+                .credentialsProvider(awsCredentialsProvider)
+                .build();
+
+        final URI entitlementURI = new URI("https://entitlement-marketplace.cn-northwest-1.amazonaws.com.cn");
+        final MarketplaceEntitlementClient entitlementClient = MarketplaceEntitlementClient.builder()
+                .region(Region.CN_NORTHWEST_1)
+                .credentialsProvider(awsCredentialsProvider)
+                .endpointOverride(entitlementURI)
+                .build();
+
+        // 1. Get Customer identifier
+        final ResolveCustomerRequest resolveCustomerRequest = ResolveCustomerRequest.builder()
+                .registrationToken("{registrationToken}")
+                .build();
+        final ResolveCustomerResponse resolveCustomerResponse = meteringClient.resolveCustomer(resolveCustomerRequest);
+        final String customerIdentifier = resolveCustomerResponse.customerIdentifier();
+        final String productCode = resolveCustomerResponse.productCode();
+        // 2. get entitlement
+        final GetEntitlementsRequest getEntitlementsRequest = GetEntitlementsRequest.builder()
+                .productCode(productCode)
+                .filter(Map.of(GetEntitlementFilterName.CUSTOMER_IDENTIFIER, List.of(customerIdentifier)))
+                .maxResults({number})
+                .build();
+        final GetEntitlementsResponse getEntitlementsResponse = entitlementClient.getEntitlements(getEntitlementsRequest);
+        
+        System.out.println(getEntitlementsResponse.entitlements());
+    }
+}
+
+// Please repleace {ak}, {sk}, {registrationToken} or {number} accordingly.
+Maven pom.xml
+<dependencyManagement>
+   <dependencies>
+       <dependency>
+           <groupId>software.amazon.awssdk</groupId>
+           <artifactId>bom</artifactId>
+           <version>2.25.23</version>
+           <type>pom</type>
+           <scope>import</scope>
+       </dependency>
+       <dependency>
+           <groupId>org.apache.logging.log4j</groupId>
+           <artifactId>log4j-bom</artifactId>
+           <version>2.20.0</version>
+           <type>pom</type>
+           <scope>import</scope>
+       </dependency>
+   </dependencies>
+</dependencyManagement>
+<dependencies>
+   <dependency>
+       <groupId>software.amazon.awssdk</groupId>
+       <artifactId>s3</artifactId>
+   </dependency>
+   <dependency>
+       <groupId>software.amazon.awssdk</groupId>
+       <artifactId>marketplacemetering</artifactId>
+       <version>2.24.4</version>
+   </dependency>
+   <dependency>
+       <groupId>software.amazon.awssdk</groupId>
+       <artifactId>marketplaceentitlement</artifactId>
+       <version>2.25.31</version>
+   </dependency>
+   <dependency>
+       <groupId>software.amazon.awssdk</groupId>
+       <artifactId>aws-sdk-java</artifactId>
+       <version>2.25.31</version>
+       <scope>provided</scope>
+   </dependency>
+</dependencies>
+
+Python example
+import boto3
+
+custom_endpoint_url = 'https://entitlement-marketplace.cn-northwest-1.amazonaws.com.cn'
+client = boto3.client('marketplace-entitlement', endpoint_url=custom_endpoint_url, region_name='cn-northwest-1')
+print('client created with endpoint:' + custom_endpoint_url)
+
+entitlement = client.get_entitlements(
+  ProductCode='{productCode}',
+  Filter={
+    'CUSTOMER_IDENTIFIER': [
+      '{customerIdentifier}'
+    ]
+  },
+  MaxResults=
+)
+print('Entitlement results:')
+print(entitlement)
+
+# Please replace {productCode} or {customerIdentifier} accordingly.

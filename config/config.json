@@ -1,22 +1,38 @@
 {
-  "api_keys": {
-    "moonshot": "sk-SySSZUtiKBzN4lhaXmmxBeFjS8sO3AbH0Jc2HS2cHB1uLme7",
-    "zhipu": "884462f8abf66ea312356694169d916f.ccuJPZFCiiDSlcXV",
-    "claude": "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"
+  "api": {
+    "keys": {
+      "moonshot": "sk-SySSZUtiKBzN4lhaXmmxBeFjS8sO3AbH0Jc2HS2cHB1uLme7",
+      "zhipu": "884462f8abf66ea312356694169d916f.ccuJPZFCiiDSlcXV",
+      "claude": "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"
+    },
+    "urls": {
+      "moonshot": "https://api.moonshot.cn/v1/chat/completions",
+      "zhipu": "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+      "claude": "https://api.anthropic.com/v1/messages"
+    },
+    "models": {
+      "moonshot": "moonshot-v1-8k",
+      "zhipu": "glm-4",
+      "claude": "claude-3-sonnet-20240229"
+    }
   },
-  "api_urls": {
-    "moonshot": "https://api.moonshot.cn/v1/chat/completions",
-    "zhipu": "https://open.bigmodel.cn/api/paas/v4/chat/completions",
-    "claude": "https://api.anthropic.com/v1/messages"
-  },
-  "models": {
-    "moonshot": "moonshot-v1-8k",
-    "zhipu": "glm-4",
-    "claude": "claude-3-sonnet-20240229"
+  "aws_marketplace": {
+    "product_code": "8av06tw3mfeh59g5alaw3s163",
+    "sns_topics": {
+        "subscription": "arn:aws-cn:sns:cn-northwest-1:288683096364:aws-mp-subscription-notification-8av06tw3mfeh59g5alaw3s163",
+        "entitlement": "arn:aws-cn:sns:cn-northwest-1:288683096364:aws-mp-entitlement-notification-8av06tw3mfeh59g5alaw3s163"
+    },
+    "region": "cn-northwest-1",
+    "endpoints": {
+        "entitlement": "https://entitlement-marketplace.cn-northwest-1.amazonaws.com.cn"
+    }
   },
   "retry_config": {
     "max_retries": 3,
     "initial_wait": 1000,
     "backoff_factor": 2
+  },
+  "database": {
+    "path": "db/users.db"
   }
-} 
+}
