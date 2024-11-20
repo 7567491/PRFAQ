@@ -11,6 +11,24 @@ from db.db_table import show_table_info
 from db.db_upgrade import upgrade_database
 from user.logger import add_log
 import pandas as pd
+from pathlib import Path
+
+def get_db_connection():
+    """获取数据库连接"""
+    try:
+        # 确保数据库目录存在
+        db_dir = Path("db")
+        if not db_dir.exists():
+            db_dir.mkdir(parents=True)
+            
+        # 连接到数据库
+        conn = sqlite3.connect('db/app.db')
+        conn.row_factory = sqlite3.Row  # 设置行工厂，使结果可以通过列名访问
+        return conn
+    except Exception as e:
+        add_log("error", f"数据库连接失败: {str(e)}")
+        st.error(f"数据库连接失败: {str(e)}")
+        return None
 
 def show_db_admin():
     """显示数据库管理界面"""

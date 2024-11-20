@@ -73,6 +73,57 @@ points_added INTEGER NOT NULL, -- 实际增加的积分数
 FOREIGN KEY (user_id) REFERENCES users(user_id) -- 外键关联users表
 )
 
+
+## 6. 数据库序列表：sqlite_sequence
+CREATE TABLE sqlite_sequence(name,seq)
+
+
+## 7. 数据库版本表：db_version
+CREATE TABLE db_version (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            version INTEGER NOT NULL,
+            description TEXT,
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+
+## 8. AWS客户表：aws_customers
+CREATE TABLE aws_customers (
+                                aws_customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                user_id TEXT NOT NULL,
+                                customer_identifier TEXT NOT NULL,
+                                aws_account_id TEXT NOT NULL,
+                                product_code TEXT NOT NULL,
+                                subscription_status INTEGER DEFAULT 1,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                FOREIGN KEY (user_id) REFERENCES users(user_id),
+                                UNIQUE (customer_identifier)
+                            )
+
+## 9. AWS订阅表：aws_subscriptions
+CREATE TABLE aws_subscriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        aws_customer_id INTEGER NOT NULL,
+        entitlement_value INTEGER NOT NULL,
+        dimension_name TEXT NOT NULL,
+        valid_from TIMESTAMP NOT NULL,
+        valid_to TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (aws_customer_id) REFERENCES "aws_customers_old"(id)
+    )
+
+## 10. AWS通知表：aws_notifications
+CREATE TABLE aws_notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        aws_customer_id INTEGER NOT NULL,
+        notification_type TEXT NOT NULL,
+        message TEXT NOT NULL,
+        processed INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        processed_at TIMESTAMP,
+        FOREIGN KEY (aws_customer_id) REFERENCES "aws_customers_old"(id)
+    )
+
 ## 字段说明
 
 ### users表
@@ -136,15 +187,4 @@ FOREIGN KEY (user_id) REFERENCES users(user_id) -- 外键关联users表
 4. 每日限额在每日零点自动重置
 5. 数据库使用SQLite3，文件位置：db/users.db
 6. 建议定期备份数据库文件
-
-## 默认数据, 仅在初始化时候写入
-1. 默认管理员账户：
-   - username: Jack
-   - password: Amazon123
-   - role: admin
-
-2. 默认普通用户：
-   - username: Rose
-   - password: Amazon123
-   - role: user
 

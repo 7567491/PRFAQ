@@ -18,7 +18,7 @@ from datetime import datetime
 import pandas as pd
 from modules.all_in_one_generator import AllInOneGenerator
 from modules.aar_generator import AARGenerator
-from user.admin import show_admin_panel
+from admin.admin import show_admin_panel
 from user.user_process import check_auth, handle_logout, UserManager
 from user.chat import show_chat_interface
 from bill.bill import BillManager, show_bill_detail
@@ -71,7 +71,7 @@ def main():
                 
             templates = load_templates()
             if not templates:
-                st.error("模板文��加载失败：templates 为空")
+                st.error("模板文件加载失败：templates 为空")
                 add_log("error", "模板文件加载失败：templates 为空")
                 return
                 
@@ -146,7 +146,7 @@ def render_sidebar():
                 transition: all 0.3s ease;
             }
             
-            /* 鼠标悬停效��� */
+            /* 鼠标悬停效 */
             .stButton > button:hover {
                 color: black !important;
                 background-color: #ffd700 !important;
@@ -313,7 +313,7 @@ def render_main_content(config, templates):
             # 检查必要的目录和文件
             test_dir = Path("test")
             if not test_dir.exists():
-                raise FileNotFoundError("test目录不存在")
+                raise FileNotFoundError("test��录不存在")
             add_log("info", f"test目录存在: {test_dir.absolute()}")
             
             # 检查数据目录
