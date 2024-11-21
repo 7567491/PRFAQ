@@ -1,0 +1,33 @@
+
+AWS Marketplace 的新客户验证环节流程：简化的接收即验证方式
+
+当客户从 AWS Marketplace 订阅您的产品后，他们会被重定向到您预先配置的注册 URL(.user/mp_login.py)
+这个重定向是通过 HTTP POST 请求进行的，请求中会包含一个临时的 x-amzn-marketplace-token 令牌。
+这个URL会发送到.aws/webhook.py的网址
+作为服务提供方，.aws/webhook.py需要处理这个 POST 请求并验证客户信息。
+
+首先，从请求中提取 x-amzn-marketplace-token 令牌
+这是一个 URL 安全的字符串令牌。 
+它通过 POST 请求以表单数据(application/x-www-form-urlencoded)的形式发送，参数名为"x-amzn-marketplace-token"。
+它是一个临时的（有效期5分钟）一次性使用的令牌，通常包含 Base64 编码的字符，可能看起来类似这样：
+"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+
+在实际请求中可能是这样的:
+POST /register HTTP/1.1
+Host: your-domain.com
+Content-Type: application/x-www-form-urlencoded
+
+x-amzn-marketplace-token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+
+webhook.py只需要确认收到这个HTTPS POST令牌, 就确认用户是aws marketplace的客户，
+随机生成测试用的customerID以及aws账号ID(test-开头)
+使用系统配置的productCode
+
+展示首次使用体验，欢迎aws marketplace的客户注册./user/mp_login.py
+用户注册后，把所有用户信息，按照数据库表结构/db/db.txt存入数据库，包括user信息和mp_user信息两个表以及相关索引
+注册成功后，直接完成登录，进入app.py的功能主界面
+积分等规则保持不变
+
+相应的，.aws/ding.py需要模拟以上生成HTTP POST请求的完整过程
+使用一个点击按钮，点击后生成HTTP POST请求，发送给webhook.py的URL
+
