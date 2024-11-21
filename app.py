@@ -25,11 +25,11 @@ from bill.bill import BillManager, show_bill_detail
 from user.logger import display_logs
 from db.db_admin import show_db_admin
 from user.user_history import show_user_history
-from user.mp_login import show_marketplace_login
 from user.user_login import show_normal_login
 import sys
 import traceback
 from aws import show_aws_mp_panel
+from urllib.parse import urlencode
 
 def clear_main_content():
     """Clear all content in the main area except core sentence and logs"""
@@ -52,19 +52,20 @@ def clear_main_content():
             del st.session_state[key]
 
 def main():
-    init_session_state()
-    
-    # 如果已登录，显示应用内容
-    if st.session_state.authenticated:
-        show_app_content()
-        return
-    
-    # 检查是否是 Marketplace 用户
-    if "session_id" in st.query_params:
-        show_marketplace_login()
-    else:
-        # 普通用户登录
+    # 初始化会话状态
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+    if "user" not in st.session_state:
+        st.session_state.user = None
+
+    # 如果未登录，显示登录页面
+    if not st.session_state.authenticated:
+        from user.user_login import show_normal_login
         show_normal_login()
+        return
+
+    # 登录成功后显示主应用内容
+    show_app_content()  # 调用这个函数来显示主页面
 
 def show_app_content():
     """显示应用主要内容"""
@@ -111,7 +112,7 @@ def show_app_content():
                 layout="wide"
             )
         except Exception as e:
-            st.error(f"设置页面配置失败: {str(e)}")
+            st.error(f"设置页面配置失: {str(e)}")
             add_log("error", f"设置页面配置失败: {str(e)}")
             return
         
@@ -267,7 +268,7 @@ def render_sidebar():
         # 系统功能按钮
         st.header("系统功能")
         
-        if st.button("📜 历史查看", use_container_width=True):
+        if st.button("📜 历史查", use_container_width=True):
             clear_main_content()
             st.session_state.current_section = 'history'
             add_log("info", "进入历史记录查看")
@@ -321,7 +322,7 @@ def render_main_content(config, templates):
         mlp_generator.generate_mlp()
     elif st.session_state.current_section == 'aar':
         st.markdown("""
-        复盘六步法源于军事领域的"事后复盘"（After Action Review），后被广泛应用于企业管理实践中。它通过六个系统化步骤：设定复盘目标、回顾行动过程、对比预期结果、分析差距原因、总结经验教训、形成复盘文档，帮助团队从实践中提炼经验，持续改进。本模块将引导您完整地执行这六个步骤，通过AI辅助分析，帮助您更深入地思考项目经验，形成可复用的经验总结文档。
+        复盘六源于军事领域的"事后复盘"（After Action Review），后被广泛应用于企业管理实践中。它通过六个系统化步骤：设定复盘目标、回顾行动过程、对比预期结果、分析差距原因、总结经验教训、形成复盘文档，帮助团队从实践中提炼经验，持续改进。本模块将引导您完整地执行这六个步骤，通过AI辅助分析，帮助您更深入地思考项目经验，形成可复用的经验总结文档。
         """)
         api_client = APIClient(config)
         aar_generator = AARGenerator(api_client)

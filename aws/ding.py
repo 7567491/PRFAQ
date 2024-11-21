@@ -1,88 +1,51 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 import uvicorn
 import json
-import uuid
-import random
-from datetime import datetime, timedelta
-from pathlib import Path
-import boto3
 import os
 from dotenv import load_dotenv
 import logging
 import requests
-import traceback
-
-# 加载环境变量
-load_dotenv()
+from datetime import datetime
+from pathlib import Path
+import base64
 
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(message)s',
+    handlers=[logging.StreamHandler()]
 )
-logger = logging.getLogger('marketplace_simulator')
+logger = logging.getLogger(__name__)
 
-app = FastAPI(title="AWS Marketplace Event Simulator")
+# 加载环境变量
+load_dotenv()
 
-# 设置模板目录
-templates = Jinja2Templates(directory="aws/templates")
-
-# 创建templates目录
-Path("aws/templates").mkdir(parents=True, exist_ok=True)
+# 设置应用和模板
+app = FastAPI()
+BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 class MarketplaceSimulator:
     def __init__(self):
-        self.product_code = os.getenv('AWS_PRODUCT_CODE')
-        self.webhook_url = "http://localhost:8000"
+        # 从环境变量获取配置
+        self.webhook_url = os.getenv('WEBHOOK_URL', 'http://localhost:8000')
+        self.product_code = os.getenv('AWS_PRODUCT_CODE', 'default_product_code')
     
-    def generate_customer_id(self):
-        return f"cust-{uuid.uuid4().hex[:8]}"
-    
-    def generate_aws_account_id(self):
-        return ''.join([str(random.randint(0, 9)) for _ in range(12)])
-    
-    def generate_token(self, customer_id=None, aws_account_id=None):
-        """生成模拟的注册token"""
-        if not customer_id:
-            customer_id = self.generate_customer_id()
-        if not aws_account_id:
-            aws_account_id = self.generate_aws_account_id()
-            
-        token_data = {
-            "customerIdentifier": customer_id,
-            "customerAWSAccountId": aws_account_id,
-            "productCode": self.product_code,
-            "timestamp": datetime.utcnow().isoformat(),
-            "signature": f"sim-{uuid.uuid4().hex}"
-        }
-        return token_data
-    
-    def generate_sns_message(self, event_type, details=None):
-        """生成SNS消息"""
-        if details is None:
-            details = {}
-            
-        message = {
-            "Type": event_type,
-            "MessageId": str(uuid.uuid4()),
-            "TopicArn": os.getenv('AWS_MP_SUBSCRIPTION_ARN'),
-            "Message": json.dumps({
-                "action": event_type,
-                "customerIdentifier": self.generate_customer_id(),
-                "productCode": self.product_code,
-                "timestamp": datetime.utcnow().isoformat(),
-                **details
-            }),
-            "Timestamp": datetime.utcnow().isoformat(),
-            "SignatureVersion": "1",
-            "Signature": f"sim-{uuid.uuid4().hex}",
-            "SigningCertURL": "https://simulator.amazonses.com/cert.pem"
-        }
-        return message
+    def generate_token(self):
+        """生成一个随机的Base64编码令牌"""
+        # 生成32字节的随机数据
+        random_bytes = os.urandom(32)
+        # 转换为Base64字符串
+        token = base64.b64encode(random_bytes).decode('utf-8')
+        # 添加test-前缀
+        token = f"test-{token}"
+        
+        logger.info(f"生成新的测试Token: {token}")
+        return token
 
+# 创建模拟器实例
 simulator = MarketplaceSimulator()
 
 @app.get("/", response_class=HTMLResponse)
@@ -90,97 +53,102 @@ async def home(request: Request):
     """渲染主页"""
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "product_code": os.getenv('AWS_PRODUCT_CODE')
+        "product_code": simulator.product_code
     })
 
-@app.post("/api/generate-token")
-async def generate_token(request: Request):
-    """生成注册token"""
-    try:
-        data = await request.json()
-        token = simulator.generate_token(
-            customer_id=data.get('customerIdentifier'),
-            aws_account_id=data.get('customerAWSAccountId')
-        )
-        return {"token": token}
-    except Exception as e:
-        logger.error(f"Token generation error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
-
 @app.post("/api/send-registration")
-async def send_registration(request: Request):
-    """发送注册请求到webhook"""
+async def send_registration():
+    """发送注册请求到webhook并记录详细过程"""
+    process_log = []
     try:
-        data = await request.json()
-        token = data.get('token')
-        if not token:
-            raise HTTPException(status_code=400, detail="Token is required")
-        
-        logger.info(f"Sending registration request with token: {token}")
-        
-        # 发送请求时不要自动跟随重定向
+        # 1. 生成随机token
+        logger.info("开始模拟 AWS Marketplace 注册流程...")
+        token = simulator.generate_token()
+        process_log.append({
+            "timestamp": datetime.now().isoformat(),
+            "step": "第一步：生成随机Token",
+            "details": token
+        })
+
+        # 2. 准备HTTP请求
+        request_data = {"x-amzn-marketplace-token": token}
+        request_url = f"{simulator.webhook_url}/register"
+        logger.info(f"准备发送注册请求到Webhook服务: {request_url}")
+        process_log.append({
+            "timestamp": datetime.now().isoformat(),
+            "step": "第二步：准备发送注册请求",
+            "details": {
+                "目标地址": request_url,
+                "请求方式": "POST",
+                "请求头": {"Content-Type": "application/x-www-form-urlencoded"},
+                "请求数据": request_data
+            }
+        })
+
+        # 3. 发送请求
+        logger.info("正在发送注册请求到Webhook...")
         response = requests.post(
-            f"{simulator.webhook_url}/register",
-            data={"x-amzn-marketplace-token": json.dumps({
-                "customerIdentifier": token["customerIdentifier"],
-                "customerAWSAccountId": token["customerAWSAccountId"],
-                "productCode": token["productCode"]
-            })},
-            allow_redirects=False  # 不自动跟随重定向
+            request_url,
+            data=request_data,
+            allow_redirects=False
         )
         
-        logger.info(f"Webhook response: {response.status_code}")
-        
-        # 如果是重定向响应
-        if response.status_code in [301, 302, 303, 307, 308]:
-            redirect_url = response.headers.get('Location')
-            return {
-                "status": "success",
-                "webhook_response": {
-                    "status_code": response.status_code,
-                    "redirect_url": redirect_url,
-                    "message": "Registration successful. Redirecting to application."
-                }
+        logger.info(f"收到Webhook响应: HTTP状态码 {response.status_code}")
+        process_log.append({
+            "timestamp": datetime.now().isoformat(),
+            "step": "第三步：收到Webhook响应",
+            "details": {
+                "状态码": response.status_code,
+                "响应头": dict(response.headers)
             }
-        
-        return {
+        })
+
+        # 4. 处理响应
+        result = {
             "status": "success",
-            "webhook_response": {
+            "process_log": process_log,
+            "request": {
+                "url": request_url,
+                "method": "POST",
+                "headers": {"Content-Type": "application/x-www-form-urlencoded"},
+                "body": request_data
+            },
+            "response": {
                 "status_code": response.status_code,
-                "body": response.text,
                 "headers": dict(response.headers)
             }
         }
-    except Exception as e:
-        logger.error(f"Registration error: {str(e)}")
-        logger.error(f"Error details: {traceback.format_exc()}")
-        raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/api/send-sns")
-async def send_sns(request: Request):
-    """发送SNS消息到webhook"""
-    try:
-        data = await request.json()
-        event_type = data.get('eventType')
-        details = data.get('details', {})
+        # 5. 获取webhook返回的登录地址
+        try:
+            response_data = response.json()
+            if "login_url" in response_data:
+                login_url = response_data["login_url"]
+                logger.info(f"从Webhook获取到登录地址: {login_url}")
+                process_log.append({
+                    "timestamp": datetime.now().isoformat(),
+                    "step": "第四步：获取登录地址",
+                    "details": {"登录地址": login_url}
+                })
+                result["redirect_url"] = login_url
+            else:
+                logger.warning("Webhook响应中未包含登录地址")
+        except json.JSONDecodeError:
+            logger.warning("Webhook响应格式不是有效的JSON")
+        except KeyError:
+            logger.warning("Webhook响应中缺少登录地址字段")
+
+        logger.info("AWS Marketplace 注册流程模拟完成")
+        return result
         
-        sns_message = simulator.generate_sns_message(event_type, details)
-        
-        response = requests.post(
-            f"{simulator.webhook_url}/sns",
-            json=sns_message
-        )
-        
-        return {
-            "status": "success",
-            "webhook_response": {
-                "status_code": response.status_code,
-                "body": response.text
-            }
-        }
     except Exception as e:
-        logger.error(f"SNS error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        error_msg = f"注册过程发生错误: {str(e)}"
+        logger.error(error_msg)
+        raise HTTPException(status_code=400, detail={
+            "error": error_msg,
+            "process_log": process_log
+        })
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8002) 
+    port = int(os.getenv('PORT', 8002))
+    uvicorn.run(app, host="0.0.0.0", port=port) 

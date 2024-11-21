@@ -115,5 +115,382 @@
       }
     },
     "status": "pending"
+  },
+  "813df77d-c3e5-4704-bcf2-6c9cc0263537": {
+    "session_id": "813df77d-c3e5-4704-bcf2-6c9cc0263537",
+    "timestamp": "2024-11-21T06:38:10.733091+00:00",
+    "user_info": {
+      "CustomerIdentifier": "cust-3a0199a8",
+      "CustomerAWSAccountId": "999187489303",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "e53da337-e9a4-49ba-8e00-e18c5d31fb5e": {
+    "session_id": "e53da337-e9a4-49ba-8e00-e18c5d31fb5e",
+    "timestamp": "2024-11-21T06:51:01.690546+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "649eac36-f7f5-404a-b889-3b3f1e0e311b": {
+    "session_id": "649eac36-f7f5-404a-b889-3b3f1e0e311b",
+    "timestamp": "2024-11-21T06:51:06.460216+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "ce458d43-ef1b-4d2b-8b77-569650f5e77f": {
+    "session_id": "ce458d43-ef1b-4d2b-8b77-569650f5e77f",
+    "timestamp": "2024-11-21T06:51:06.797657+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "8fc83712-2570-474e-a7d2-df56875f7881": {
+    "session_id": "8fc83712-2570-474e-a7d2-df56875f7881",
+    "timestamp": "2024-11-21T06:51:06.997034+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "64c092d1-12d9-4e17-b2f2-67975c1cd855": {
+    "session_id": "64c092d1-12d9-4e17-b2f2-67975c1cd855",
+    "timestamp": "2024-11-21T06:51:07.181293+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "ff85ca95-259c-45b5-89b7-1352c4adf1fb": {
+    "session_id": "ff85ca95-259c-45b5-89b7-1352c4adf1fb",
+    "timestamp": "2024-11-21T06:51:07.341477+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "5801ac85-92e2-4862-b489-be73cee73bfc": {
+    "session_id": "5801ac85-92e2-4862-b489-be73cee73bfc",
+    "timestamp": "2024-11-21T06:51:07.500811+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "e9b4a067-b0d1-4faa-9327-bc2f077b01cd": {
+    "session_id": "e9b4a067-b0d1-4faa-9327-bc2f077b01cd",
+    "timestamp": "2024-11-21T06:51:07.669179+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "f208190f-1802-470e-a112-e07e175171b6": {
+    "session_id": "f208190f-1802-470e-a112-e07e175171b6",
+    "timestamp": "2024-11-21T06:51:07.836322+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "5b2bf13e-3063-417e-9f42-f2c58840f15e": {
+    "session_id": "5b2bf13e-3063-417e-9f42-f2c58840f15e",
+    "timestamp": "2024-11-21T06:51:08.005230+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "140f1d00-4f0f-4786-a216-f6bd7efce5f2": {
+    "session_id": "140f1d00-4f0f-4786-a216-f6bd7efce5f2",
+    "timestamp": "2024-11-21T06:51:08.174254+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "fe287748-5665-43ae-8491-83c609dfd355": {
+    "session_id": "fe287748-5665-43ae-8491-83c609dfd355",
+    "timestamp": "2024-11-21T06:51:08.348644+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "2229468a-bbe1-4e42-95fe-d73185ddcb6a": {
+    "session_id": "2229468a-bbe1-4e42-95fe-d73185ddcb6a",
+    "timestamp": "2024-11-21T06:51:08.517486+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "436f0200-5ca7-4d9d-b1b7-4c0f9ddf9e83": {
+    "session_id": "436f0200-5ca7-4d9d-b1b7-4c0f9ddf9e83",
+    "timestamp": "2024-11-21T06:51:08.693858+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "f4c16018-8174-41f0-b2bd-5ca024cc297c": {
+    "session_id": "f4c16018-8174-41f0-b2bd-5ca024cc297c",
+    "timestamp": "2024-11-21T06:51:08.843474+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "6f5e7263-d1a0-4f26-b2b6-37a2991ebb73": {
+    "session_id": "6f5e7263-d1a0-4f26-b2b6-37a2991ebb73",
+    "timestamp": "2024-11-21T06:52:49.196270+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "13bd9129-7701-45df-b7c0-36d0e34bc7b2": {
+    "session_id": "13bd9129-7701-45df-b7c0-36d0e34bc7b2",
+    "timestamp": "2024-11-21T06:56:06.271693+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "92a516e7-45e0-42a4-920d-4efbaebced18": {
+    "session_id": "92a516e7-45e0-42a4-920d-4efbaebced18",
+    "timestamp": "2024-11-21T06:57:02.587562+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "ede3b525-dd9d-4a9e-94e1-9a252441a865": {
+    "session_id": "ede3b525-dd9d-4a9e-94e1-9a252441a865",
+    "timestamp": "2024-11-21T06:57:10.969839+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "c8a203aa-120a-4299-b6a1-f8604aaf73c4": {
+    "session_id": "c8a203aa-120a-4299-b6a1-f8604aaf73c4",
+    "timestamp": "2024-11-21T07:00:00.234617+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "7b86849b-4006-4e8c-b11f-494ee489c252": {
+    "session_id": "7b86849b-4006-4e8c-b11f-494ee489c252",
+    "timestamp": "2024-11-21T07:01:25.389196+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "67d0ee08-3cc7-41b9-9c67-6ffc5e5b3560": {
+    "session_id": "67d0ee08-3cc7-41b9-9c67-6ffc5e5b3560",
+    "timestamp": "2024-11-21T07:04:34.996865+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "dab448c4-0883-4890-89d7-8724bd96d11f": {
+    "session_id": "dab448c4-0883-4890-89d7-8724bd96d11f",
+    "timestamp": "2024-11-21T07:08:09.865629+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "9c3c093d-9833-412f-b003-1d20c0d1aa64": {
+    "session_id": "9c3c093d-9833-412f-b003-1d20c0d1aa64",
+    "timestamp": "2024-11-21T07:11:47.557791+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "ef60a517-c839-4db8-84ed-06d09125f3ae": {
+    "session_id": "ef60a517-c839-4db8-84ed-06d09125f3ae",
+    "timestamp": "2024-11-21T07:18:57.463278+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "725ef943-ffd8-418d-937a-39e9f3d0d2d6": {
+    "session_id": "725ef943-ffd8-418d-937a-39e9f3d0d2d6",
+    "timestamp": "2024-11-21T07:22:14.837852+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "ff3e1252-eb4e-4dde-a506-8ecbd8a77b8a": {
+    "session_id": "ff3e1252-eb4e-4dde-a506-8ecbd8a77b8a",
+    "timestamp": "2024-11-21T07:24:08.675327+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "e70f0fda-08a6-46f1-a273-08cc866ffd80": {
+    "session_id": "e70f0fda-08a6-46f1-a273-08cc866ffd80",
+    "timestamp": "2024-11-21T07:24:17.132409+00:00",
+    "user_info": {
+      "CustomerIdentifier": "test-customer-001",
+      "CustomerAWSAccountId": "test-account-001",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
   }
 }

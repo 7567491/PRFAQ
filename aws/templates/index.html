@@ -3,163 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AWS Marketplace Event Simulator</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>AWS Marketplace Simulator</title>
     <style>
-        .json-preview {
-            background-color: #f8f9fa;
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #232f3e;
+            margin-bottom: 30px;
+        }
+        .info {
+            background-color: #f0f7ff;
             padding: 15px;
-            border-radius: 5px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .button {
+            background-color: #ff9900;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #ff8400;
+        }
+        #logArea {
+            width: 100%;
+            height: 400px;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #1e1e1e;
+            color: #00ff00;
             font-family: monospace;
+            border: none;
+            border-radius: 4px;
+            resize: vertical;
+            overflow-y: scroll;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .timestamp {
+            color: #888;
         }
     </style>
 </head>
 <body>
-    <div class="container mt-4">
-        <h1>AWS Marketplace Event Simulator</h1>
+    <div class="container">
+        <h1>AWS Marketplace 模拟器</h1>
         
-        <!-- Event Type Selection -->
-        <div class="mb-4">
-            <h3>事件类型</h3>
-            <select class="form-select" id="eventType">
-                <option value="registration">新用户注册</option>
-                <option value="subscription">订阅状态变更</option>
-                <option value="entitlement">授权状态变更</option>
-            </select>
+        <div class="info">
+            <p>产品代码: <strong>{{ product_code }}</strong></p>
+            <p>此模拟器用于测试 AWS Marketplace 客户注册流程。点击下方按钮模拟新客户注册。</p>
         </div>
 
-        <!-- Registration Form -->
-        <div id="registrationForm" class="event-form mb-4">
-            <h3>注册参数</h3>
-            <div class="mb-3">
-                <label class="form-label">Customer Identifier</label>
-                <input type="text" class="form-control" id="customerIdentifier" placeholder="留空将自动生成">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">AWS Account ID</label>
-                <input type="text" class="form-control" id="customerAWSAccountId" placeholder="留空将自动生成">
-            </div>
-            <button class="btn btn-primary" onclick="generateToken()">生成Token</button>
-            <button class="btn btn-success" onclick="sendRegistration()">发送注册请求</button>
-        </div>
-
-        <!-- SNS Form -->
-        <div id="snsForm" class="event-form mb-4" style="display: none;">
-            <h3>SNS事件参数</h3>
-            <div class="mb-3">
-                <label class="form-label">事件动作</label>
-                <select class="form-select" id="snsEventAction">
-                    <option value="subscribe">订阅确认</option>
-                    <option value="subscription_activated">订阅激活</option>
-                    <option value="subscription_cancelled">订阅取消</option>
-                </select>
-            </div>
-            <button class="btn btn-success" onclick="sendSNS()">发送SNS消息</button>
-        </div>
-
-        <!-- Preview -->
-        <div class="mb-4">
-            <h3>请求预览</h3>
-            <pre class="json-preview" id="requestPreview"></pre>
-        </div>
-
-        <!-- Response -->
-        <div class="mb-4">
-            <h3>响应结果</h3>
-            <pre class="json-preview" id="responsePreview"></pre>
-        </div>
+        <button class="button" onclick="simulateRegistration()">模拟新客户注册</button>
+        
+        <div id="logArea"></div>
     </div>
 
     <script>
-        let currentToken = null;
-
-        // 切换事件类型表单
-        document.getElementById('eventType').addEventListener('change', function() {
-            document.querySelectorAll('.event-form').forEach(form => form.style.display = 'none');
-            if (this.value === 'registration') {
-                document.getElementById('registrationForm').style.display = 'block';
-            } else {
-                document.getElementById('snsForm').style.display = 'block';
-            }
-        });
-
-        // 生成token
-        async function generateToken() {
-            try {
-                const response = await fetch('/api/generate-token', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        customerIdentifier: document.getElementById('customerIdentifier').value,
-                        customerAWSAccountId: document.getElementById('customerAWSAccountId').value
-                    })
-                });
-                const data = await response.json();
-                currentToken = data.token;
-                document.getElementById('requestPreview').textContent = JSON.stringify(data, null, 2);
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('responsePreview').textContent = JSON.stringify({error: error.message}, null, 2);
-            }
+        function appendLog(message) {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toISOString();
+            logArea.innerHTML += `[${timestamp}] ${message}\n`;
+            logArea.scrollTop = logArea.scrollHeight;
         }
 
-        // 发送注册请求
-        async function sendRegistration() {
-            if (!currentToken) {
-                alert('请先生成Token');
-                return;
-            }
+        async function simulateRegistration() {
+            // 在新窗口中打开重定向URL
+            const openInNewWindow = (url) => {
+                window.open(url, '_blank');
+            };
+
+            const logArea = document.getElementById('logArea');
+            logArea.innerHTML = ''; // 清空之前的日志
+            
             try {
+                appendLog('开始模拟 AWS Marketplace 注册流程...');
+                
+                appendLog('发送注册请求...');
                 const response = await fetch('/api/send-registration', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({token: currentToken})
+                        'Content-Type': 'application/json'
+                    }
                 });
+                
                 const data = await response.json();
                 
-                // 显示响应结果
-                document.getElementById('responsePreview').textContent = JSON.stringify(data, null, 2);
-                
-                // 如果有重定向URL，添加一个链接
-                if (data.webhook_response.redirect_url) {
-                    const redirectDiv = document.createElement('div');
-                    redirectDiv.className = 'alert alert-success mt-3';
-                    redirectDiv.innerHTML = `
-                        注册成功！<br>
-                        <a href="${data.webhook_response.redirect_url}" class="btn btn-primary mt-2" target="_blank">
-                            点击跳转到应用
-                        </a>
-                    `;
-                    document.getElementById('responsePreview').after(redirectDiv);
+                if (data.status === 'success') {
+                    // 显示生成的Token
+                    appendLog('Token 生成成功:');
+                    appendLog(JSON.stringify(data.request.body, null, 2));
+                    
+                    // 显示HTTP请求详情
+                    appendLog('\nHTTP POST请求详情:');
+                    appendLog(`URL: ${data.request.url}`);
+                    appendLog(`Headers: ${JSON.stringify(data.request.headers, null, 2)}`);
+                    
+                    // 显示响应详情
+                    appendLog('\n收到服务器响应:');
+                    appendLog(`Status: ${data.response.status_code}`);
+                    appendLog(`Headers: ${JSON.stringify(data.response.headers, null, 2)}`);
+                    
+                    // 如果有重定向URL，在新窗口中打开
+                    if (data.redirect_url) {
+                        appendLog(`\n获取到重定向URL: ${data.redirect_url}`);
+                        appendLog('3秒后将在新窗口中打开...');
+                        setTimeout(() => {
+                            openInNewWindow(data.redirect_url);
+                        }, 3000);
+                    }
+                    
+                    // 显示过程日志
+                    if (data.process_log) {
+                        appendLog('\n详细过程日志:');
+                        data.process_log.forEach(log => {
+                            appendLog(`[${log.timestamp}] ${log.step}`);
+                            appendLog(JSON.stringify(log.details, null, 2));
+                        });
+                    }
+                    
+                    appendLog('\n注册流程完成!');
+                } else {
+                    throw new Error('注册失败');
                 }
             } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('responsePreview').textContent = JSON.stringify({error: error.message}, null, 2);
-            }
-        }
-
-        // 发送SNS消息
-        async function sendSNS() {
-            try {
-                const response = await fetch('/api/send-sns', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        eventType: document.getElementById('snsEventAction').value,
-                        details: {}
-                    })
-                });
-                const data = await response.json();
-                document.getElementById('responsePreview').textContent = JSON.stringify(data, null, 2);
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('responsePreview').textContent = JSON.stringify({error: error.message}, null, 2);
+                appendLog(`\n错误: ${error.message}`);
             }
         }
     </script>

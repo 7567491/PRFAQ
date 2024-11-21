@@ -1,9 +1,0 @@
-在user_process.py的check_auth中，增加一个对webhook的检查机制
-检查是否有会话ID参数？
-如果有，读取并验证 mp_session.json 中的信息
-验证成功后，将用户信息写入 st.session_state
-注册成为一个新的marketplace用户类，写入sqlite数据库，同时使用user表和marketplace_user表并建立关联
-把信息自动填写到登录界面，用户可以直接登录
-
-如果没有，则正常流程
-
