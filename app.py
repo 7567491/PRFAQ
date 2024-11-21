@@ -51,6 +51,14 @@ def clear_main_content():
 
 def main():
     try:
+        # 检查是否是来自AWS Marketplace的请求
+        query_params = st.experimental_get_query_params()
+        if 'marketplace' in query_params:
+            # 重定向到主页
+            st.experimental_set_query_params()  # 清除参数
+            st.rerun()  # 重新运行应用
+            return
+            
         # 检查并升级数据库
         upgrade_result = check_and_upgrade()
         if not upgrade_result:
@@ -345,7 +353,7 @@ def render_main_content(config, templates):
             # 渲染测试界面
             result = career_test.render()
             
-            # 如果测试完成并有结果，保存到历史记��
+            # 如果测试完成并有结果，保存到历史记
             if result and 'final_result' in st.session_state:
                 try:
                     save_history(
