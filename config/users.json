@@ -1,0 +1,28 @@
+{
+  "cust-28a406a5": {
+    "user_id": "cust-28a406a5",
+    "username": "cust-28a406a5",
+    "aws_account_id": "409768128852",
+    "product_code": "8av06tw3mfeh59g5alaw3s163",
+    "entitlements": {
+      "test": "test"
+    },
+    "created_at": "2024-11-21T02:21:49.583069+00:00",
+    "role": "user",
+    "is_active": true,
+    "last_login": null
+  },
+  "cust-f3da0969": {
+    "user_id": "cust-f3da0969",
+    "username": "cust-f3da0969",
+    "aws_account_id": "735345322495",
+    "product_code": "8av06tw3mfeh59g5alaw3s163",
+    "entitlements": {
+      "test": "test"
+    },
+    "created_at": "2024-11-21T02:58:37.047516+00:00",
+    "role": "marketplace_user",
+    "is_active": true,
+    "last_login": "2024-11-21T02:58:37.048522+00:00"
+  }
+}

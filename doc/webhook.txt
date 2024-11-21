@@ -1,0 +1,142 @@
+AWS Marketplace Webhook 服务说明
+==============================
+
+简介
+----
+Webhook服务是处理AWS Marketplace事件的核心组件，负责接收和处理来自AWS Marketplace的各种请求，包括用户注册验证、订阅状态变更通知等。
+服务通过FastAPI实现，提供了安全可靠的事件处理机制。
+
+基本信息
+-------
+- 服务地址：http://localhost:8000
+- 配置文件：.env
+- 服务代码：./aws/webhook.py
+- 会话存储：./config/mp_session.json
+
+主要功能
+-------
+1. 用户注册处理
+   - 接收AWS Marketplace重定向
+   - 验证Registration Token
+   - 获取用户信息
+   - 验证订阅状态
+   - 重定向到应用登录页
+
+2. SNS通知处理
+   - 订阅确认消息处理
+   - 订阅状态变更通知
+   - 授权状态变更通知
+   - 消息签名验证
+
+API端点
+-------
+1. POST /register
+   - 功能：处理用户注册
+   - 参数：x-amzn-marketplace-token
+   - 响应：重定向到应用登录页
+
+2. POST /sns
+   - 功能：处理SNS通知
+   - 参数：SNS消息体
+   - 响应：确认接收状态
+
+会话管理
+-------
+1. 会话数据结构
+   ```json
+   {
+       "session_id": "uuid",
+       "timestamp": "ISO格式时间戳",
+       "user_info": {
+           "CustomerIdentifier": "客户ID",
+           "CustomerAWSAccountId": "AWS账号",
+           "ProductCode": "产品代码"
+       },
+       "status": "pending/processed"
+   }
+   ```
+
+2. 会话处理流程
+   - 生成唯一会话ID
+   - 存储用户信息
+   - 设置会话状态
+   - 定期清理过期会话
+
+配置要求
+-------
+环境变量(.env)需要包含：
+- AWS_PRODUCT_CODE：产品代码
+- AWS_MP_SUBSCRIPTION_ARN：订阅SNS主题ARN
+- AWS_MP_ENTITLEMENT_ARN：授权SNS主题ARN
+- AWS_ACCESS_KEY_ID：AWS访问密钥ID
+- AWS_SECRET_ACCESS_KEY：AWS访问密钥
+- AWS_DEFAULT_REGION：AWS区域
+
+日志记录
+-------
+1. 日志文件：./aws/webhook.log
+2. 记录内容：
+   - 请求信息
+   - 处理过程
+   - 错误信息
+   - AWS API调用结果
+
+错误处理
+-------
+1. Token验证错误
+   - 无效token返回400
+   - API调用失败返回500
+   - 记录详细错误信息
+
+2. SNS消息错误
+   - 签名验证失败返回400
+   - 消息格式错误返回400
+   - 处理失败返回500
+
+3. 系统错误
+   - 文件操作错误
+   - 网络超时
+   - 配置错误
+
+安全措施
+-------
+1. 会话安全
+   - 使用UUID生成会话ID
+   - 会话5分钟后过期
+   - 文件操作加锁
+
+2. 数据验证
+   - Token格式验证
+   - SNS消息签名验证
+   - 参数完整性检查
+
+依赖安装
+-------
+pip install fastapi uvicorn python-dotenv boto3 requests
+
+启动方法
+-------
+1. 确保配置文件就绪
+2. 启动命令：python aws/webhook.py
+3. 确认服务监听在8000端口
+
+集成测试
+-------
+1. 使用事件模拟器(ding.py)测试
+2. 验证用户注册流程
+3. 测试SNS消息处理
+4. 检查错误处理机制
+
+注意事项
+-------
+1. 确保AWS凭证配置正确
+2. 定期检查日志文件
+3. 监控会话文件大小
+4. 及时清理过期会话
+
+调试建议
+-------
+1. 检查日志文件
+2. 使用事件模拟器
+3. 验证AWS API响应
+4. 确认重定向URL正确 

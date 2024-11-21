@@ -1,0 +1,64 @@
+webhook.py应该是一个独立运行的FastAPI应用，它的主要职责是处理来自AWS Marketplace的各种事件通知。
+这个服务需要监听在localhost:8000端口，并设置几个关键的端点来处理不同类型的请求。
+
+webhook服务需要实现一个主要的POST端点来处理AWS Marketplace的注册流程。
+当客户从AWS Marketplace订阅产品后，他们会被重定向到我们的注册URL，携带一个临时的x-amzn-marketplace-token参数。
+这个过程是通过HTTP POST请求完成的。
+
+webhook的处理流程应该分为三个主要步骤：
+首先是token验证，使用AWS Marketplace Metering Service的ResolveCustomer API将临时token转换为客户信息。
+这个API调用会返回三个关键信息：CustomerIdentifier（客户唯一标识）、CustomerAWSAccountId（客户的AWS账号）和ProductCode（产品代码）。
+
+第二步是授权验证，使用AWS Marketplace Entitlement Service的GetEntitlements API来检查客户的订阅状态和可用数量。
+这一步确保客户有权访问我们的服务，并且可以了解他们订阅的具体内容。
+
+最后一步是处理验证结果。如果验证成功，webhook需要将客户信息（CustomerIdentifier、CustomerAWSAccountId和ProductCode）以及订阅状态信息保存到系统中。
+然后，将用户重定向到我们的主应用程序，在那里展示首次使用体验。
+主程序登录入口为http://localhost:8501/, 登录后会进入app.py的主界面。
+认证检查通过 check_auth() 函数完成，用户信息存储在 st.session_state 中
+
+在webhook处理完AWS Marketplace的token后，生成一个临时的会话token
+将用户信息（CustomerIdentifier等）存储在./config/mp_session.json中
+{
+    "session_id": "临时会话ID",
+    "timestamp": "创建时间",
+    "user_info": {
+        "CustomerIdentifier": "从AWS获取的ID",
+        "CustomerAWSAccountId": "AWS账号",
+        "ProductCode": "产品代码"
+    },
+    "status": "pending"  // 可以用来标记是否已处理
+}
+重定向到Streamlit应用时携带这个临时token
+在 check_auth 函数中添加处理webhook重定向的逻辑
+
+另外，我们还需要设置端点来处理订阅状态变更的通知（预留程序段，以后再实现）
+这些通知会通过SNS发送，所以我们需要实现相应的处理逻辑来验证SNS消息的真实性，并正确解析消息内容。
+这包括处理订阅确认消息和实际的状态变更通知。
+
+在处理完请求后，webhook需要将用户重定向到主应用(app.py)的登录界面。
+这个重定向过程需要携带必要的用户信息，但要注意安全性，避免直接在URL中暴露敏感信息。
+我们可以使用临时的会话标识符或者加密的参数来传递用户信息。
+
+为了便于调试和监控，webhook应该实现完整的日志记录功能。每个请求的详情、处理过程和结果都应该被记录下来./aws/webhook.log。这些日志不仅要在控制台显示，还应该保存到文件中以便后续分析。
+在错误处理方面，webhook需要能够优雅地处理各种可能的异常情况，比如token无效、AWS API调用失败、SNS消息验证失败等。每种错误都应该返回适当的HTTP状态码和错误信息。
+关于配置管理，webhook应该使用python-dotenv来加载.env文件中的配置信息，包括AWS的认证信息、SNS主题ARN等。这样可以避免在代码中硬编码这些敏感信息，也便于在不同环境中部署。
+
+文档./doc/Saas contract.txt 描述了如何处理订阅和授权事件。
+文档./doc/Saas api interface.txt 描述了如何调用aws的api。
+文档./doc/Saas code.txt 描述了如何生成模拟token。
+.env文件中定义了aws的product code，以及订阅和授权用的sns的arn。
+
+
+事件模拟器（./aws/ding.py）则是一个专门用于测试的工具。
+使用FastAPI配合简单的HTML前端，提供一个Web界面，允许开发人员模拟各种AWS Marketplace事件。
+这个模拟器需要能够生成符合AWS Marketplace格式的请求，包括正确的请求头和消息体。
+为了使测试更加真实，生成有效的模拟token等，这些token在发送到webhook后能够被正确处理。
+模拟器的界面应该简单直观，可以让用户选择要模拟的事件类型，比如"新用户注册"、"订阅成功"、"取消订阅"等。
+对于每种事件类型，相关的参数都根据文档格式随机生成一个表单，默认选项为随机值。
+例如，对于新用户注册事件，用户可以输入自定义的用户信息；对于订阅状态变更事件，用户可以选择具体的状态。
+
+文档./doc/Saas contract.txt 描述了如何处理订阅和授权事件。
+文档./doc/Saas api interface.txt 描述了如何调用aws的api。
+文档./doc/Saas code.txt 描述了如何生成模拟token。
+.env文件中定义了aws的product code，以及订阅和授权用的sns的arn。

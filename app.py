@@ -19,12 +19,14 @@ import pandas as pd
 from modules.all_in_one_generator import AllInOneGenerator
 from modules.aar_generator import AARGenerator
 from admin.admin import show_admin_panel
-from user.user_process import check_auth, handle_logout, UserManager
+from user.user_process import check_auth, handle_logout, UserManager, handle_marketplace_login, init_session_state
 from user.chat import show_chat_interface
 from bill.bill import BillManager, show_bill_detail
 from user.logger import display_logs
 from db.db_admin import show_db_admin
 from user.user_history import show_user_history
+from user.mp_login import show_marketplace_login
+from user.user_login import show_normal_login
 import sys
 import traceback
 from aws import show_aws_mp_panel
@@ -50,7 +52,30 @@ def clear_main_content():
             del st.session_state[key]
 
 def main():
+    init_session_state()
+    
+    # 如果已登录，显示应用内容
+    if st.session_state.authenticated:
+        show_app_content()
+        return
+    
+    # 检查是否是 Marketplace 用户
+    if "session_id" in st.query_params:
+        show_marketplace_login()
+    else:
+        # 普通用户登录
+        show_normal_login()
+
+def show_app_content():
+    """显示应用主要内容"""
     try:
+        # 检查是否已登录
+        if not check_auth():
+            # 尝试Marketplace登录
+            if handle_marketplace_login():
+                st.rerun()
+            return
+        
         # 检查并升级数据库
         # upgrade_result = check_and_upgrade()
         # if not upgrade_result:
@@ -90,10 +115,6 @@ def main():
             add_log("error", f"设置页面配置失败: {str(e)}")
             return
         
-        # 检查用户是否已登录
-        if not check_auth():
-            return
-            
         # Initialize session state
         if 'current_section' not in st.session_state:
             st.session_state.current_section = 'pr'

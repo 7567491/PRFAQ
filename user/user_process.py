@@ -1,8 +1,20 @@
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from user.user_base import UserManager
 from user.logger import add_log
 from user.user_add import UserRegistration
+from pathlib import Path
+import json
+import portalocker
+import os
+from typing import Optional
+import sqlite3
+import traceback
+import hashlib
+
+# 添加新的常量定义
+MP_SESSION_FILE = Path("./config/mp_session.json")
+MP_SESSION_TIMEOUT = 5  # minutes
 
 def init_session_state():
     """初始化session state中的用户相关变量"""
@@ -154,10 +166,330 @@ def handle_logout():
     st.session_state.clear()
     st.rerun()
 
-def check_auth():
-    """检查用户是否已登录"""
-    init_session_state()
-    if not st.session_state.authenticated:
-        show_login_page()
+def load_marketplace_session(session_id: str) -> Optional[dict]:
+    """加载AWS Marketplace会话信息"""
+    try:
+        if not MP_SESSION_FILE.exists():
+            return None
+            
+        with open(MP_SESSION_FILE, "r") as f:
+            sessions = json.load(f)
+            if session_id not in sessions:
+                return None
+                
+            session = sessions[session_id]
+            
+            # 解析时间戳
+            session_time = datetime.fromisoformat(session["timestamp"])
+            current_time = datetime.now(timezone.utc)
+            
+            # 检查会话是否过期（5分钟）
+            if (current_time - session_time).total_seconds() > MP_SESSION_TIMEOUT * 60:
+                add_log("warning", f"Marketplace session {session_id} expired")
+                return None
+                
+            return session
+    except Exception as e:
+        add_log("error", f"Error loading marketplace session: {str(e)}")
+        return None
+
+def register_marketplace_user(user_info: dict) -> bool:
+    """注册AWS Marketplace用户"""
+    try:
+        # 检查用户是否已存在
+        user_mgr = UserManager()
+        customer_id = user_info["CustomerIdentifier"]
+        
+        if not user_mgr.user_exists(customer_id):
+            # 创建新用户
+            user_data = {
+                "user_id": customer_id,
+                "username": customer_id,  # 使用CustomerIdentifier作为用户名
+                "aws_account_id": user_info["CustomerAWSAccountId"],
+                "product_code": user_info["ProductCode"],
+                "entitlements": user_info.get("Entitlements", {}),
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "role": "user",
+                "is_active": True,
+                "last_login": None
+            }
+            user_mgr.add_user(user_data)
+            add_log("info", f"Registered new marketplace user: {customer_id}")
+            return True
+        else:
+            add_log("info", f"Marketplace user already exists: {customer_id}")
+            return True
+            
+    except Exception as e:
+        add_log("error", f"Error registering marketplace user: {str(e)}")
         return False
-    return True
+
+def handle_marketplace_login() -> bool:
+    """处理AWS Marketplace登录"""
+    try:
+        # 获取URL参数
+        session_id = st.query_params.get("session_id")
+        if not session_id:
+            return False
+            
+        # 加载marketplace会话
+        session = load_marketplace_session(session_id)
+        if not session:
+            return False
+            
+        user_info = session["user_info"]
+        customer_id = user_info["CustomerIdentifier"]
+        
+        # 注册或更新用户
+        if not register_marketplace_user(user_info):
+            return False
+            
+        # 设置登录状态
+        user_mgr = UserManager()
+        user_info = user_mgr.get_user_info(customer_id)
+        if user_info and user_info['is_active']:
+            st.session_state.user = customer_id
+            st.session_state.authenticated = True
+            st.session_state.user_role = user_info['role']
+            
+            # 更新最后登录时间
+            user_mgr.update_last_login(customer_id)
+            
+            add_log("info", f"Marketplace user {customer_id} logged in successfully")
+            return True
+            
+        return False
+        
+    except Exception as e:
+        add_log("error", f"Error handling marketplace login: {str(e)}")
+        return False
+
+def check_auth():
+    """检查用户是否已登录，包括处理 AWS Marketplace 会话"""
+    init_session_state()
+    
+    # 如果已经认证，直接返回
+    if st.session_state.authenticated:
+        return True
+        
+    # 检查 AWS Marketplace 会话
+    try:
+        session_id = st.query_params.get('session_id')
+        if session_id:
+            session = load_marketplace_session(session_id)
+            if session:
+                # 使用 AWS 客户标识符作为用户名
+                username = session['user_info']['CustomerIdentifier']
+                user_mgr = UserManager()
+                
+                # 获取或创建用户
+                if not user_mgr.user_exists(username):
+                    # 这里可以添加创建 Marketplace 用户的逻辑
+                    add_log("info", f"Creating new marketplace user: {username}")
+                    # TODO: 实现创建用户的逻辑
+                    pass
+                
+                user_info = user_mgr.get_user_info(username)
+                if user_info and user_info['is_active']:
+                    st.session_state.user = username
+                    st.session_state.authenticated = True
+                    st.session_state.user_role = user_info['role']
+                    
+                    # 更新最后登录时间
+                    user_mgr.update_last_login(username)
+                    
+                    # 更新会话状态
+                    update_marketplace_session(session_id, "processed")
+                    
+                    add_log("info", f"Marketplace user {username} logged in successfully")
+                    return True
+    except Exception as e:
+        add_log("error", f"Error processing marketplace session: {str(e)}")
+    
+    # 如果 Marketplace 认证失败或不存在，显示常规登录页面
+    show_login_page()
+    return False
+
+class UserManager:
+    def __init__(self):
+        self.db_file = "db/users.db"
+        self.user_file = "config/users.json"  # 保留json文件用于marketplace用户
+        
+        # 确保目录存在
+        Path(self.db_file).parent.mkdir(exist_ok=True)
+        Path(self.user_file).parent.mkdir(exist_ok=True)
+        
+        # 初始化数据库
+        self._init_db()
+        
+        # 加载json用户（marketplace用户）
+        if not Path(self.user_file).exists():
+            with open(self.user_file, "w") as f:
+                json.dump({}, f)
+        self.load_users()
+
+    def _init_db(self):
+        """初始化数据库"""
+        conn = sqlite3.connect(self.db_file)
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS users
+                    (username TEXT PRIMARY KEY, 
+                     password TEXT,
+                     role TEXT,
+                     is_active INTEGER,
+                     created_at TEXT,
+                     last_login TEXT)''')
+        conn.commit()
+        conn.close()
+
+    def _hash_password(self, password: str) -> str:
+        """对密码进行SHA-256哈希处理"""
+        return hashlib.sha256(password.encode()).hexdigest()
+
+    def verify_user(self, username: str, password: str) -> bool:
+        """验证用户名和密码"""
+        print(f"\n[DEBUG] 开始验证用户: {username}")
+        print(f"[DEBUG] 数据库文件路径: {self.db_file}")
+        
+        # 对输入的密码进行哈希处理
+        hashed_password = self._hash_password(password)
+        print(f"[DEBUG] 输入密码的哈希值: {hashed_password}")
+        
+        # 首先检查SQLite数据库（普通用户）
+        try:
+            conn = sqlite3.connect(self.db_file)
+            c = conn.cursor()
+            
+            # 查询用户
+            c.execute('SELECT username, password, role, is_active FROM users WHERE username = ?', (username,))
+            result = c.fetchone()
+            print(f"[DEBUG] 数据库查询结果: {result}")
+            
+            if result:
+                db_password = result[1]
+                print(f"[DEBUG] 数据库中的密码哈希: {db_password}")
+                print(f"[DEBUG] 密码匹配结果: {db_password == hashed_password}")
+                
+                if db_password == hashed_password:
+                    print("[DEBUG] 数据库验证成功")
+                    add_log("info", f"Database user verified: {username}")
+                    return True
+                else:
+                    print("[DEBUG] 密码不匹配")
+            else:
+                print("[DEBUG] 用户名在数据库中不存在")
+            
+            conn.close()
+            
+        except Exception as e:
+            print(f"[DEBUG] 数据库验证错误: {str(e)}")
+            print(f"[DEBUG] 错误详情: {traceback.format_exc()}")
+            add_log("error", f"Database verification error: {str(e)}")
+        
+        # 如果数据库中没有，检查json文件（marketplace用户）
+        print(f"\n[DEBUG] 检查JSON文件中的用户")
+        print(f"[DEBUG] JSON文件路径: {self.user_file}")
+        print(f"[DEBUG] 当前JSON用户列表: {list(self.users.keys())}")
+        
+        if username in self.users:
+            json_password = self.users[username].get('password')
+            print(f"[DEBUG] JSON中的密码: {json_password}")
+            print(f"[DEBUG] 密码匹配结果: {json_password == hashed_password}")
+            
+            if json_password == hashed_password:
+                print("[DEBUG] JSON验证成功")
+                add_log("info", f"Marketplace user verified: {username}")
+                return True
+            else:
+                print("[DEBUG] JSON密码不匹配")
+        else:
+            print("[DEBUG] 用户名在JSON中不存在")
+        
+        print("[DEBUG] 验证失败")
+        return False
+
+    def get_user_info(self, username: str) -> dict:
+        """获取用户信息"""
+        print(f"\n[DEBUG] 获取用户信息: {username}")
+        # 首先检查数据库
+        try:
+            conn = sqlite3.connect(self.db_file)
+            c = conn.cursor()
+            
+            # 获取所有字段
+            c.execute('''SELECT user_id, username, role, is_active, created_at, 
+                        last_login, total_chars, total_cost, daily_chars_limit, 
+                        used_chars_today, points, status 
+                        FROM users WHERE username = ?''', (username,))
+            result = c.fetchone()
+            conn.close()
+            
+            print(f"[DEBUG] 数据库查询结果: {result}")
+            
+            if result:
+                user_info = {
+                    "user_id": result[0],
+                    "username": result[1],
+                    "role": result[2],
+                    "is_active": bool(result[3]),
+                    "created_at": result[4],
+                    "last_login": result[5],
+                    "total_chars": result[6],
+                    "total_cost": result[7],
+                    "daily_chars_limit": result[8],
+                    "used_chars_today": result[9],
+                    "points": result[10],
+                    "status": result[11]
+                }
+                print(f"[DEBUG] 解析后的用户信息: {user_info}")
+                return user_info
+            
+        except Exception as e:
+            print(f"[DEBUG] 获取用户信息错误: {str(e)}")
+            print(f"[DEBUG] 错误详情: {traceback.format_exc()}")
+            add_log("error", f"Error getting user info from database: {str(e)}")
+        
+        # 如果数据库中没有，检查json文件
+        return self.users.get(username, {})
+
+    def update_last_login(self, username: str):
+        """更新最后登录时间"""
+        now = datetime.now(timezone.utc).isoformat()
+        
+        try:
+            # 更新数据库
+            conn = sqlite3.connect(self.db_file)
+            c = conn.cursor()
+            c.execute('UPDATE users SET last_login = ? WHERE username = ?', 
+                     (now, username))
+            conn.commit()
+            conn.close()
+            add_log("info", f"Updated last login for database user: {username}")
+        except Exception as e:
+            add_log("error", f"Error updating last login in database: {str(e)}")
+        
+        # 如果是marketplace用户，也更新json
+        if username in self.users:
+            self.users[username]['last_login'] = now
+            self.save_users()
+            add_log("info", f"Updated last login for marketplace user: {username}")
+
+    def load_users(self):
+        with open(self.user_file, "r") as f:
+            self.users = json.load(f)
+
+    def save_users(self):
+        with open(self.user_file, "w") as f:
+            portalocker.lock(f, portalocker.LOCK_EX)
+            try:
+                json.dump(self.users, f, indent=2)
+            finally:
+                portalocker.unlock(f)
+
+    def user_exists(self, username: str) -> bool:
+        return username in self.users
+
+    def add_user(self, user_data: dict):
+        username = user_data["username"]
+        self.users[username] = user_data
+        self.save_users()

@@ -1,0 +1,111 @@
+AWS Marketplace 事件模拟器使用说明
+================================
+
+简介
+----
+AWS Marketplace事件模拟器是一个用于测试和开发的工具，可以模拟AWS Marketplace的各种事件，包括用户注册、订阅状态变更等。
+模拟器提供了Web界面，方便开发人员进行测试。
+
+基本信息
+-------
+- 访问地址：http://localhost:8002
+- 配置文件：.env
+- 模拟器代码：./aws/ding.py
+- 前端模板：./aws/templates/index.html
+
+功能说明
+-------
+1. 用户注册模拟
+   - 生成注册Token
+   - 可自定义CustomerIdentifier和AWS Account ID
+   - 自动生成随机值
+   - Token格式符合AWS Marketplace规范
+
+2. 订阅状态变更
+   - 订阅确认消息
+   - 订阅激活通知
+   - 订阅取消通知
+   - 自动生成SNS消息格式
+
+使用方法
+-------
+1. 新用户注册测试
+   a. 选择"新用户注册"事件类型
+   b. 可选填写Customer Identifier和AWS Account ID
+   c. 点击"生成Token"按钮
+   d. 查看生成的Token内容
+   e. 点击"发送注册请求"将请求发送到webhook
+
+2. 订阅状态变更测试
+   a. 选择"订阅状态变更"事件类型
+   b. 选择具体的事件动作
+   c. 点击"发送SNS消息"
+   d. 查看webhook响应结果
+
+界面说明
+-------
+1. 事件类型选择
+   - 新用户注册
+   - 订阅状态变更
+   - 授权状态变更
+
+2. 参数配置区域
+   - 根据选择的事件类型显示相应的表单
+   - 支持自定义参数输入
+   - 提供随机值生成功能
+
+3. 预览区域
+   - 显示生成的请求内容
+   - JSON格式化显示
+   - 便于检查请求数据
+
+4. 响应显示区域
+   - 显示webhook的响应结果
+   - 包含状态码和响应内容
+   - 错误信息显示
+
+配置要求
+-------
+环境变量(.env)需要包含：
+- AWS_PRODUCT_CODE：产品代码
+- AWS_MP_SUBSCRIPTION_ARN：订阅SNS主题ARN
+- AWS_MP_ENTITLEMENT_ARN：授权SNS主题ARN
+- AWS_ACCESS_KEY_ID：AWS访问密钥ID
+- AWS_SECRET_ACCESS_KEY：AWS访问密钥
+- AWS_DEFAULT_REGION：AWS区域
+
+依赖安装
+-------
+pip install fastapi uvicorn jinja2 requests python-dotenv
+
+启动方法
+-------
+1. 确保所有配置文件就绪
+2. 启动命令：python aws/ding.py
+3. 访问 http://localhost:8002
+
+注意事项
+-------
+1. 模拟器仅用于开发和测试环境
+2. 生成的Token和SNS消息仅用于测试
+3. 确保webhook服务(localhost:8000)已启动
+4. 请勿在生产环境使用模拟数据
+
+错误处理
+-------
+1. 请求错误
+   - 检查webhook服务是否正常运行
+   - 确认请求参数格式正确
+   - 查看响应区域的错误信息
+
+2. 配置错误
+   - 确认.env文件包含所需配置
+   - 检查AWS凭证是否正确
+   - 验证SNS主题ARN是否有效
+
+调试建议
+-------
+1. 使用浏览器开发者工具查看请求详情
+2. 检查webhook服务的日志输出
+3. 验证生成的Token格式是否正确
+4. 确认SNS消息结构符合规范 
