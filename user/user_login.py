@@ -28,33 +28,33 @@ def show_normal_login():
                 return False
     
     if submitted:
-        print(f"\n[DEBUG] 尝试登录用户: {username}")
         user_mgr = UserManager()
-        
         if user_mgr.verify_user(username, password):
-            print("[DEBUG] 验证成功，获取用户信息")
+            # 获取用户信息
             user_info = user_mgr.get_user_info(username)
-            print(f"[DEBUG] 用户信息: {user_info}")
-            
             if not user_info.get('is_active', True):
-                print("[DEBUG] 用户已被禁用")
                 st.error("账号已被禁用，请联系管理员")
+                add_log("warning", f"Disabled user attempted login: {username}")
                 return False
             
-            print("[DEBUG] 设置登录状态")
+            # 设置登录状态
             st.session_state.user = username
             st.session_state.authenticated = True
             st.session_state.user_role = user_info.get('role', 'user')
             
-            print("[DEBUG] 更新最后登录时间")
+            # 保存登录信息
+            st.session_state.saved_username = username
+            st.session_state.saved_password = password
+            
+            # 更新最后登录时间
             user_mgr.update_last_login(username)
             
             add_log("info", f"User logged in: {username}")
             st.rerun()
             return True
         else:
-            print("[DEBUG] 验证失败")
             st.error("用户名或密码错误")
+            add_log("warning", f"Failed login attempt for user: {username}")
             return False
     
     return False 

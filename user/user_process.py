@@ -348,83 +348,45 @@ class UserManager:
 
     def verify_user(self, username: str, password: str) -> bool:
         """验证用户名和密码"""
-        print(f"\n[DEBUG] 开始验证用户: {username}")
-        print(f"[DEBUG] 数据库文件路径: {self.db_file}")
-        
-        # 对输入的密码进行哈希处理
-        hashed_password = self._hash_password(password)
-        print(f"[DEBUG] 输入密码的哈希值: {hashed_password}")
-        
-        # 首先检查SQLite数据库（普通用户）
         try:
+            # 对输入的密码进行哈希处理
+            hashed_password = self._hash_password(password)
+            
+            # 首先检查SQLite数据库（普通用户）
             conn = sqlite3.connect(self.db_file)
             c = conn.cursor()
-            
-            # 查询用户
             c.execute('SELECT username, password, role, is_active FROM users WHERE username = ?', (username,))
             result = c.fetchone()
-            print(f"[DEBUG] 数据库查询结果: {result}")
-            
-            if result:
-                db_password = result[1]
-                print(f"[DEBUG] 数据库中的密码哈希: {db_password}")
-                print(f"[DEBUG] 密码匹配结果: {db_password == hashed_password}")
-                
-                if db_password == hashed_password:
-                    print("[DEBUG] 数据库验证成功")
-                    add_log("info", f"Database user verified: {username}")
-                    return True
-                else:
-                    print("[DEBUG] 密码不匹配")
-            else:
-                print("[DEBUG] 用户名在数据库中不存在")
-            
             conn.close()
             
+            if result and result[1] == hashed_password:
+                add_log("info", f"Database user verified: {username}")
+                return True
+            
         except Exception as e:
-            print(f"[DEBUG] 数据库验证错误: {str(e)}")
-            print(f"[DEBUG] 错误详情: {traceback.format_exc()}")
             add_log("error", f"Database verification error: {str(e)}")
         
         # 如果数据库中没有，检查json文件（marketplace用户）
-        print(f"\n[DEBUG] 检查JSON文件中的用户")
-        print(f"[DEBUG] JSON文件路径: {self.user_file}")
-        print(f"[DEBUG] 当前JSON用户列表: {list(self.users.keys())}")
-        
         if username in self.users:
             json_password = self.users[username].get('password')
-            print(f"[DEBUG] JSON中的密码: {json_password}")
-            print(f"[DEBUG] 密码匹配结果: {json_password == hashed_password}")
-            
             if json_password == hashed_password:
-                print("[DEBUG] JSON验证成功")
                 add_log("info", f"Marketplace user verified: {username}")
                 return True
-            else:
-                print("[DEBUG] JSON密码不匹配")
-        else:
-            print("[DEBUG] 用户名在JSON中不存在")
         
-        print("[DEBUG] 验证失败")
         return False
 
     def get_user_info(self, username: str) -> dict:
         """获取用户信息"""
-        print(f"\n[DEBUG] 获取用户信息: {username}")
-        # 首先检查数据库
         try:
+            # 首先检查数据库
             conn = sqlite3.connect(self.db_file)
             c = conn.cursor()
-            
-            # 获取所有字段
             c.execute('''SELECT user_id, username, role, is_active, created_at, 
                         last_login, total_chars, total_cost, daily_chars_limit, 
                         used_chars_today, points, status 
                         FROM users WHERE username = ?''', (username,))
             result = c.fetchone()
             conn.close()
-            
-            print(f"[DEBUG] 数据库查询结果: {result}")
             
             if result:
                 user_info = {
@@ -441,12 +403,9 @@ class UserManager:
                     "points": result[10],
                     "status": result[11]
                 }
-                print(f"[DEBUG] 解析后的用户信息: {user_info}")
                 return user_info
             
         except Exception as e:
-            print(f"[DEBUG] 获取用户信息错误: {str(e)}")
-            print(f"[DEBUG] 错误详情: {traceback.format_exc()}")
             add_log("error", f"Error getting user info from database: {str(e)}")
         
         # 如果数据库中没有，检查json文件

@@ -89,5 +89,31 @@
       }
     },
     "status": "pending"
+  },
+  "00aba6a1-724f-471c-bf21-171e6296a4f1": {
+    "session_id": "00aba6a1-724f-471c-bf21-171e6296a4f1",
+    "timestamp": "2024-11-21T03:20:39.767647+00:00",
+    "user_info": {
+      "CustomerIdentifier": "cust-482e1f3b",
+      "CustomerAWSAccountId": "096728946318",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
+  },
+  "c09d72db-1521-4d1c-8e73-7889202627c4": {
+    "session_id": "c09d72db-1521-4d1c-8e73-7889202627c4",
+    "timestamp": "2024-11-21T03:25:56.617304+00:00",
+    "user_info": {
+      "CustomerIdentifier": "cust-cdf33556",
+      "CustomerAWSAccountId": "994085471174",
+      "ProductCode": "8av06tw3mfeh59g5alaw3s163",
+      "Entitlements": {
+        "test": "test"
+      }
+    },
+    "status": "pending"
   }
 }

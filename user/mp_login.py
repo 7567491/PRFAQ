@@ -42,8 +42,6 @@ def register_marketplace_user(user_info: dict, setup_info: dict) -> bool:
         product_code = user_info["ProductCode"]
         now = datetime.now(timezone.utc).isoformat()
         
-        print(f"[DEBUG] 开始注册MP用户: {customer_id}")
-        
         # 连接数据库
         conn = sqlite3.connect("db/users.db")
         c = conn.cursor()
@@ -55,7 +53,6 @@ def register_marketplace_user(user_info: dict, setup_info: dict) -> bool:
             # 1. 检查用户是否已存在
             c.execute('SELECT user_id FROM users WHERE user_id = ?', (customer_id,))
             if c.fetchone():
-                print(f"[DEBUG] MP用户已存在: {customer_id}")
                 conn.commit()
                 return True
             
@@ -130,8 +127,6 @@ def register_marketplace_user(user_info: dict, setup_info: dict) -> bool:
             
             # 提交事务
             conn.commit()
-            print(f"[DEBUG] 成功注册MP用户: {customer_id}")
-            print(f"[DEBUG] 总积分: {total_points}")
             add_log("info", f"Registered new marketplace user: {customer_id} with {total_points} points")
             return True
             

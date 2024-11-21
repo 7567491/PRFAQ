@@ -3,12 +3,7 @@ import streamlit as st
 import pandas as pd
 from typing import Dict, List, Optional
 from db.db_table import get_table_info
-import logging
 from modules.utils import add_log
-
-# 配置日志
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 class UserManagement:
     def __init__(self, db_path: str = 'db/users.db'):
@@ -17,24 +12,18 @@ class UserManagement:
             # 获取users表的结构信息
             self.table_info = get_table_info('users')
             if not self.table_info:
-                logger.error("无法获取users表结构信息")
                 add_log("error", "无法获取users表结构信息")
                 raise ValueError("表结构信息为空")
                 
             self.columns = [col['name'] for col in self.table_info]
-            logger.info(f"成功获取到表结构，列信息: {self.columns}")
         except Exception as e:
-            logger.error(f"初始化UserManagement失败: {str(e)}")
             add_log("error", f"初始化UserManagement失败: {str(e)}")
             raise
     
     def get_connection(self) -> sqlite3.Connection:
         try:
-            conn = sqlite3.connect(self.db_path)
-            logger.info(f"成功连接到数据库: {self.db_path}")
-            return conn
+            return sqlite3.connect(self.db_path)
         except Exception as e:
-            logger.error(f"数据库连接失败: {str(e)}")
             add_log("error", f"数据库连接失败: {str(e)}")
             raise
     
@@ -50,7 +39,6 @@ class UserManagement:
                 FROM users
                 ORDER BY created_at DESC
             """
-            logger.info(f"执行查询: {query}")
             
             c.execute(query)
             users = []
@@ -71,11 +59,8 @@ class UserManagement:
                     'used_chars_today': row[12],
                     'points': row[13]
                 })
-            
-            logger.info(f"成功获取到 {len(users)} 条用户记录")
             return users
         except Exception as e:
-            logger.error(f"获取用户列表失败: {str(e)}\nSQL: {query}")
             add_log("error", f"获取用户列表失败: {str(e)}")
             raise
         finally:
@@ -86,21 +71,14 @@ class UserManagement:
         conn = self.get_connection()
         try:
             c = conn.cursor()
-            query = """
-                UPDATE users
-                SET is_active = ?
-                WHERE user_id = ?
-            """
             status_value = 1 if status == 'active' else 0
-            logger.info(f"执行状态更新: user_id={user_id}, is_active={status_value}")
-            c.execute(query, (status_value, user_id))
+            c.execute("UPDATE users SET is_active = ? WHERE user_id = ?", 
+                     (status_value, user_id))
             conn.commit()
-            logger.info("状态更新成功")
             add_log("info", f"用户 {user_id} 状态更新为 {status}")
             return True
         except Exception as e:
             error_msg = f"更新用户状态失败: {str(e)}"
-            logger.error(error_msg)
             add_log("error", error_msg)
             st.error(error_msg)
             return False
@@ -117,15 +95,12 @@ class UserManagement:
                 SET role = ?
                 WHERE user_id = ?
             """
-            logger.info(f"执行角色更新: user_id={user_id}, role={role}")
             c.execute(query, (role, user_id))
             conn.commit()
-            logger.info("角色更新成功")
             add_log("info", f"用户 {user_id} 角色更新为 {role}")
             return True
         except Exception as e:
             error_msg = f"更新用户角色失败: {str(e)}"
-            logger.error(error_msg)
             add_log("error", error_msg)
             st.error(error_msg)
             return False
@@ -160,7 +135,6 @@ class UserManagement:
             return counts
             
         except Exception as e:
-            logger.error(f"获取用户关联记录数失败: {str(e)}")
             add_log("error", f"获取用户关联记录数失败: {str(e)}")
             return {}
         finally:
@@ -201,7 +175,7 @@ class UserManagement:
                 try:
                     cursor.execute(f"DELETE FROM {table} WHERE {id_field} = ?", (user_id,))
                 except sqlite3.OperationalError as e:
-                    logger.debug(f"表 {table} 删除失败（可能不存在）: {str(e)}")
+                    add_log("debug", f"表 {table} 删除失败（可能不存在）: {str(e)}")
             
             # 提交事务
             conn.commit()
@@ -211,7 +185,6 @@ class UserManagement:
         except Exception as e:
             conn.rollback()
             error_msg = f"删除用户失败: {str(e)}"
-            logger.error(error_msg)
             add_log("error", error_msg)
             return False
         finally:
@@ -366,6 +339,5 @@ def show_user_management():
             
     except Exception as e:
         error_msg = f"用户管理界面加载失败: {str(e)}"
-        logger.error(error_msg)
         add_log("error", error_msg)
         st.error(error_msg) 
