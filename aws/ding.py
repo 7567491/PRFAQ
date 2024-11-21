@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 import uvicorn
 import json
 import os
@@ -32,6 +32,7 @@ class MarketplaceSimulator:
         # 从环境变量获取配置
         self.webhook_url = os.getenv('WEBHOOK_URL', 'http://localhost:8000')
         self.product_code = os.getenv('AWS_PRODUCT_CODE', 'default_product_code')
+        self.prod_webhook_url = "http://amazonsp.com/mp"  # 添加生产环境URL
     
     def generate_token(self):
         """生成一个随机的Base64编码令牌"""
@@ -143,6 +144,99 @@ async def send_registration():
         
     except Exception as e:
         error_msg = f"注册过程发生错误: {str(e)}"
+        logger.error(error_msg)
+        raise HTTPException(status_code=400, detail={
+            "error": error_msg,
+            "process_log": process_log
+        })
+
+@app.post("/api/send-prod-registration")
+async def send_prod_registration():
+    """发送生产环境注册请求"""
+    process_log = []
+    try:
+        # 1. 生成随机token
+        logger.info("开始生产环境 AWS Marketplace 注册流程...")
+        token = simulator.generate_token()
+        process_log.append({
+            "timestamp": datetime.now().isoformat(),
+            "step": "第一步：生成随机Token",
+            "details": token
+        })
+
+        # 2. 准备HTTP请求
+        request_data = {"x-amzn-marketplace-token": token}
+        request_url = simulator.prod_webhook_url
+        logger.info(f"准备发送生产环境注册请求: {request_url}")
+        process_log.append({
+            "timestamp": datetime.now().isoformat(),
+            "step": "第二步：准备发送生产环境注册请求",
+            "details": {
+                "目标地址": request_url,
+                "请求方式": "POST",
+                "请求头": {"Content-Type": "application/x-www-form-urlencoded"},
+                "请求数据": request_data
+            }
+        })
+
+        # 3. 发送请求
+        logger.info("正在发送生产环境注册请求...")
+        response = requests.post(
+            request_url,
+            data=request_data,
+            allow_redirects=False
+        )
+        
+        logger.info(f"收到生产环境响应: HTTP状态码 {response.status_code}")
+        process_log.append({
+            "timestamp": datetime.now().isoformat(),
+            "step": "第三步：收到生产环境响应",
+            "details": {
+                "状态码": response.status_code,
+                "响应头": dict(response.headers)
+            }
+        })
+
+        # 4. 处理响应
+        result = {
+            "status": "success",
+            "process_log": process_log,
+            "request": {
+                "url": request_url,
+                "method": "POST",
+                "headers": {"Content-Type": "application/x-www-form-urlencoded"},
+                "body": request_data
+            },
+            "response": {
+                "status_code": response.status_code,
+                "headers": dict(response.headers)
+            }
+        }
+
+        # 5. 获取响应中的登录地址
+        try:
+            response_data = response.json()
+            if "login_url" in response_data:
+                login_url = response_data["login_url"]
+                logger.info(f"从生产环境获取到登录地址: {login_url}")
+                process_log.append({
+                    "timestamp": datetime.now().isoformat(),
+                    "step": "第四步：获取登录地址",
+                    "details": {"登录地址": login_url}
+                })
+                result["redirect_url"] = login_url
+            else:
+                logger.warning("生产环境响应中未包含登录地址")
+        except json.JSONDecodeError:
+            logger.warning("生产环境响应格式不是有效的JSON")
+        except KeyError:
+            logger.warning("生产环境响应中缺少登录地址字段")
+
+        logger.info("生产环境 AWS Marketplace 注册流程模拟完成")
+        return result
+        
+    except Exception as e:
+        error_msg = f"生产环境注册过程发生错误: {str(e)}"
         logger.error(error_msg)
         raise HTTPException(status_code=400, detail={
             "error": error_msg,

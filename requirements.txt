@@ -78,3 +78,6 @@ fonttools>=4.0.0
 # AWS相关依赖
 boto3>=1.26.0
 botocore>=1.29.0
+
+# 文件锁定
+portalocker==2.7.0

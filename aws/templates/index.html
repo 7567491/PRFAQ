@@ -59,6 +59,13 @@
         .timestamp {
             color: #888;
         }
+        .button-prod {
+            background-color: #d13212;
+            margin-left: 10px;
+        }
+        .button-prod:hover {
+            background-color: #b22800;
+        }
     </style>
 </head>
 <body>
@@ -71,6 +78,7 @@
         </div>
 
         <button class="button" onclick="simulateRegistration()">模拟新客户注册</button>
+        <button class="button button-prod" onclick="simulateProdRegistration()">生产环境测试</button>
         
         <div id="logArea"></div>
     </div>
@@ -141,6 +149,65 @@
                     appendLog('\n注册流程完成!');
                 } else {
                     throw new Error('注册失败');
+                }
+            } catch (error) {
+                appendLog(`\n错误: ${error.message}`);
+            }
+        }
+
+        async function simulateProdRegistration() {
+            const logArea = document.getElementById('logArea');
+            logArea.innerHTML = ''; // 清空之前的日志
+            
+            try {
+                appendLog('开始生产环境 AWS Marketplace 注册流程...');
+                
+                appendLog('发送生产环境注册请求...');
+                const response = await fetch('/api/send-prod-registration', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // 显示生成的Token
+                    appendLog('Token 生成成功:');
+                    appendLog(JSON.stringify(data.request.body, null, 2));
+                    
+                    // 显示HTTP请求详情
+                    appendLog('\nHTTP POST请求详情:');
+                    appendLog(`URL: ${data.request.url}`);
+                    appendLog(`Headers: ${JSON.stringify(data.request.headers, null, 2)}`);
+                    
+                    // 显示响应详情
+                    appendLog('\n收到服务器响应:');
+                    appendLog(`Status: ${data.response.status_code}`);
+                    appendLog(`Headers: ${JSON.stringify(data.response.headers, null, 2)}`);
+                    
+                    // 如果有重定向URL，在新窗口中打开
+                    if (data.redirect_url) {
+                        appendLog(`\n获取到重定向URL: ${data.redirect_url}`);
+                        appendLog('3秒后将在新窗口中打开...');
+                        setTimeout(() => {
+                            window.open(data.redirect_url, '_blank');
+                        }, 3000);
+                    }
+                    
+                    // 显示过程日志
+                    if (data.process_log) {
+                        appendLog('\n详细过程日志:');
+                        data.process_log.forEach(log => {
+                            appendLog(`[${log.timestamp}] ${log.step}`);
+                            appendLog(JSON.stringify(log.details, null, 2));
+                        });
+                    }
+                    
+                    appendLog('\n生产环境注册流程完成!');
+                } else {
+                    throw new Error('生产环境注册失败');
                 }
             } catch (error) {
                 appendLog(`\n错误: ${error.message}`);

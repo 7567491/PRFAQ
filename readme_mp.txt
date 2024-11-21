@@ -67,3 +67,15 @@ WEBHOOK_URL=https://amazonsp.com/mp STREAMLIT_URL=https://amazonsp.com docker-co
 创建 .env 文件（可选）
 WEBHOOK_URL=https://amazonsp.com/mp
 STREAMLIT_URL=https://amazonsp.com
+
+
+
+需要单独添加 portalocker 包
+# 进入容器
+docker exec -it prfaq-main bash
+
+# 安装包
+pip install portalocker
+
+# 退出容器
+exit
