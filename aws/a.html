@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Marketplace 请求测试</h2>
+    <button onclick="sendRequest()">发送请求</button>
+    <div id="status" style="margin-top: 20px;"></div>
+    <script>
+        async function sendRequest() {
+            const statusDiv = document.getElementById('status');
+            try {
+                statusDiv.textContent = '发送请求中...';
+                console.log('开始发送请求...');
+                
+                const response = await fetch('http://localhost/mp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "x-amzn-marketplace-token": "this_is_a_test_token_12345",
+                        "timestamp": "2024-03-21",
+                        "extra_info": "some additional data"
+                    })
+                });
+                
+                console.log('收到响应:', response.status);
+                const data = await response.json();
+                console.log('响应数据:', data);
+                
+                if (data.redirect) {
+                    statusDiv.textContent = '正在重定向...';
+                    console.log('重定向到:', data.redirect);
+                    window.location.href = data.redirect;
+                } else {
+                    statusDiv.textContent = '请求完成，但没有收到重定向URL';
+                    console.log('没有重定向URL');
+                }
+            } catch (error) {
+                console.error('错误:', error);
+                statusDiv.textContent = '发生错误: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

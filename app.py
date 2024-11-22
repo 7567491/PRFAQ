@@ -52,7 +52,7 @@ def clear_main_content():
 
 def handle_marketplace_request():
     # 获取请求方法和参数
-    query_params = st.experimental_get_query_params()
+    query_params = st.query_params
     
     # 如果是marketplace参数存在，说明是从AWS Marketplace来的请求
     if 'marketplace' in query_params:
@@ -61,7 +61,7 @@ def handle_marketplace_request():
         # 我们通过query参数来模拟这个过程
         
         # 重定向到主页
-        st.experimental_set_query_params()  # 清除所有参数
+        st.query_params.clear()
         st.rerun()  # 重新加载页面
         return True
     return False
@@ -272,7 +272,7 @@ def render_sidebar():
             st.session_state.current_section = 'history'
             add_log("info", "进入历史记录查看")
         
-        if st.button("💰 积分��细", use_container_width=True):
+        if st.button("💰 积分细", use_container_width=True):
             clear_main_content()
             st.session_state.current_section = 'bill'
             add_log("info", "查看积分明细")
@@ -303,7 +303,7 @@ def render_main_content(config, templates):
         all_in_one_generator.render()
     elif st.session_state.current_section == 'pr':
         st.markdown("""
-        逆向工作法是一种从结果反推过程的创新思维方法。通过先设想理想的最终成果，再逐步分析实现这个结果所需的步骤和条件，帮助我们更清晰地规划项目路径。本模块将帮助您运用这种方法，通过编写未来新闻稿的形式，明确项目目标和关键成功要素。您只需要输入产品的核心理念，系统就会协助您生成完整的项目愿景说明，包括目标受众、价值主张、功能特性等关键内容。
+        逆向工作法是一种从结果反推过程的创新思维方法。通过先设想理想的最终成果，再逐步分析实现这个结果所需的步骤和条件，帮助��们更清晰地规划项目路径。本模块将帮助您运用这种方法，通过编写未来新闻稿的形式，明确项目目标和关键成功要素。您只需要输入产品的核心理念，系统就会协助您生成完整的项目愿景说明，包括目标受众、价值主张、功能特性等关键内容。
         """)
         api_client = APIClient(config)
         pr_generator = PRGenerator(api_client)
