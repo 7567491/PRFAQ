@@ -28,6 +28,7 @@ from user.user_history import show_user_history
 from db.db_upgrade import check_and_upgrade
 import sys
 import traceback
+from urllib.parse import urlencode
 
 def clear_main_content():
     """Clear all content in the main area except core sentence and logs"""
@@ -49,16 +50,28 @@ def clear_main_content():
         if key not in preserved_keys:
             del st.session_state[key]
 
+def handle_marketplace_request():
+    # 获取请求方法和参数
+    query_params = st.experimental_get_query_params()
+    
+    # 如果是marketplace参数存在，说明是从AWS Marketplace来的请求
+    if 'marketplace' in query_params:
+        # 获取POST数据中的token
+        # 注意：Streamlit目前不直接支持获取POST数据
+        # 我们通过query参数来模拟这个过程
+        
+        # 重定向到主页
+        st.experimental_set_query_params()  # 清除所有参数
+        st.rerun()  # 重新加载页面
+        return True
+    return False
+
 def main():
     try:
-        # 检查是否是来自AWS Marketplace的请求
-        query_params = st.experimental_get_query_params()
-        if 'marketplace' in query_params:
-            # 重定向到主页
-            st.experimental_set_query_params()  # 清除参数
-            st.rerun()  # 重新运行应用
+        # 检查是否是marketplace请求
+        if handle_marketplace_request():
             return
-            
+        
         # 检查并升级数据库
         upgrade_result = check_and_upgrade()
         if not upgrade_result:
@@ -259,7 +272,7 @@ def render_sidebar():
             st.session_state.current_section = 'history'
             add_log("info", "进入历史记录查看")
         
-        if st.button("💰 积分明细", use_container_width=True):
+        if st.button("💰 积分��细", use_container_width=True):
             clear_main_content()
             st.session_state.current_section = 'bill'
             add_log("info", "查看积分明细")
